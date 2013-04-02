@@ -45,9 +45,9 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 == Screenshots ==
 
 1. Just add your Mailigen user credentials.
-2. Choose your Mailigen list and prefered fields.
-3. Select your Widget Options.
-4. The widget displays in your sidebar.
+1. Choose your Mailigen list and prefered fields.
+1. Select your Widget Options.
+1. The widget displays in your sidebar.
 
 
 == Changelog ==
