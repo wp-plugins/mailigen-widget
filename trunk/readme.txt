@@ -24,7 +24,7 @@ The Mailigen Widget:
 
 == Installation ==
 
-1. Upload the mailchimp_widget to /wp-content/plugins/.
+1. Upload the mailigen-widget to /wp-content/plugins/.
 1. Activate the plugin through the "Plugins" menu in WordPress.
 1. Enter valid Mailigen user credentials on the plugin admin page ("Settings" >> "Mailigen Widget").
 1. Select a mailing list, preferable input fields.
