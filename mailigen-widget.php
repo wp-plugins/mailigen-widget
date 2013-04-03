@@ -75,8 +75,7 @@ class Mailigen_Widget extends WP_Widget {
      */
     function getOption($name) {
 
-        return isset($this->options[$name]) ?
-                $this->options[$name] : false;
+        return isset($this->options[$name]) ? $this->options[$name] : false;
     }
 
     /**
@@ -175,8 +174,8 @@ class Mailigen_Widget extends WP_Widget {
 
         $instance = wp_parse_args(
                 (array) $instance, array(
-                    'title' => __('Signup For Our Mailing List'),
-                    'button_name' => __('Subscribe'),
+            'title' => __('Signup For Our Mailing List'),
+            'button_name' => __('Subscribe'),
                 )
         );
         list( $id, $name, $value ) = array(
@@ -189,7 +188,7 @@ class Mailigen_Widget extends WP_Widget {
         echo "Title: <input id='{$id}' name='{$name}' type='text' value='{$value}' class='widefat' />";
         echo "</label>";
         echo "</p>";
-        
+
         list( $id, $name, $value ) = array(
             $this->get_field_id('button_name'),
             $this->get_field_name('button_name'),
@@ -382,7 +381,7 @@ class Mailigen_Options {
      */
     function init() {
         // Get options, if failed return empty array
-        $this->options = get_option('mailigen_options') ? : array();
+        $this->options = get_option('mailigen_options') ? get_option('mailigen_options') : array();
 
         // Start mailigen API
         $this->api = new MGAPI($this->getOption('mg_apikey'));
@@ -400,8 +399,8 @@ class Mailigen_Options {
         }
         // Add fields to sections
         foreach ($this->fieldsConfig() as $id => $field) {
-            $field['id'] = $field['id'] ? : $id;
-            $field['name'] = $field['name'] ? : $id;
+            $field['id'] = $field['id'] ? $field['id'] : $id;
+            $field['name'] = $field['name'] ? $field['name'] : $id;
             $this->createField($field);
         }
         // Switch post actions
