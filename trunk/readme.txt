@@ -52,11 +52,17 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 == Changelog ==
 
+= 1.1.1 =
+* Fixed bug when plugin could not be activated because of used shorthand ternary operator `?:` (available since PHP v5.3).
+
 = 1.1 =
 * First release.
 
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+* Fixed bug when plugin could not be activated because of used shorthand ternary operator `?:` (available since PHP v5.3).
 
 = 1.1 =
 * First release.
