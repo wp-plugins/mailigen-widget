@@ -4,7 +4,7 @@
   Plugin Name: Mailigen Widget
   Plugin URI: http://www.mailigen.com/assets/files/resources/plugins/wordpress/mailigen-widget.zip
   Description: Adds Mailigen signup form to your sidebar.
-  Version: 1.1
+  Version: 1.1.1
   Author: Mailigen
   Author URI: http://www.mailigen.com
 
