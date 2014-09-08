@@ -52,6 +52,11 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 == Changelog ==
 
+== Changelog ==
+
+= 1.1.2 =
+* Fixed bug where the signup form not working in non-index pages
+
 = 1.1.1 =
 * Fixed bug when plugin could not be activated because of a fatal error `Parse error: syntax error, unexpected ':' in ../wp-content/plugins/mailigen-widget/mailigen-widget.php on line 385`. Shorthand form of ternary operator `?:` is available starting from PHP v5.3
 
@@ -60,6 +65,9 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+* Fixed bug where the signup form not working in non-index pages
 
 = 1.1.1 =
 * Fixed bug when plugin could not be activated because of a fatal error `Parse error: syntax error, unexpected ':' in ../wp-content/plugins/mailigen-widget/mailigen-widget.php on line 385`. Shorthand form of ternary operator `?:` is available starting from PHP v5.3
