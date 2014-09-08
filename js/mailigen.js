@@ -5,6 +5,23 @@ var error_messages={
 };
 var error_box;
 
+var mgGetBaseURL = function(){
+    var url = location.href;
+    var baseURL = url.substring(0, url.indexOf('/', 14));
+
+    if (baseURL.indexOf('http://localhost') != -1) {
+        var url = location.href;
+        var pathname = location.pathname;
+        var index1 = url.indexOf(pathname);
+        var index2 = url.indexOf("/", index1 + 1);
+        var baseLocalUrl = url.substr(0, index2);
+
+        return baseLocalUrl + "/";
+    }
+    else {
+        return baseURL + "/";
+    }
+}
 
 $j( document ).ready(function() {
 
@@ -23,7 +40,7 @@ $j( document ).ready(function() {
         error_box.fadeOut();
         $j( '.mg-error' ).remove();
         
-        $j.post( '/wp-content/plugins/mailigen-widget/ajax.php', data, function(response) {
+        $j.post(  mgGetBaseURL() + 'wp-content/plugins/mailigen-widget/ajax.php', data, function(response) {
             response = JSON.parse(response);
             
             if(!response) {
