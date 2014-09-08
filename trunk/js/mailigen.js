@@ -23,7 +23,7 @@ $j( document ).ready(function() {
         error_box.fadeOut();
         $j( '.mg-error' ).remove();
         
-        $j.post( 'wp-content/plugins/mailigen-widget/ajax.php', data, function(response) {
+        $j.post( '/wp-content/plugins/mailigen-widget/ajax.php', data, function(response) {
             response = JSON.parse(response);
             
             if(!response) {
