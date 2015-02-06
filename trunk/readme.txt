@@ -2,7 +2,7 @@
 Contributors: krisjanis@imedia.lv
 Tags: email marketing, mailigen, mailing list, newsletter, signup form, widget
 Requires at least: 3.0.1
-Tested up to: 3.5
+Tested up to: 4.1
 Stable tag: trunk
 
 Add a signup form to your sidebar for your Mailigen mailing list.
@@ -52,8 +52,20 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 == Changelog ==
 
+= 1.2.0 =
+* Added new features (Thanks to Ted Barnett):
+ * ability to collect checkbox, dropdown, and radio fields (user must replicate values on the plugin settings separated by a comma)
+ * ability to set a widget description text
+ * ability to set a custom Success Message
+ * ability to set an optional Redirect URL after submission
+ * ability to turn off double opt-in
+ * ability to turn off update existing user
+ * ability to turn off send welcome email
+* Added waiting indicator when user needs to wait for a response from server after pressing subscribe button
+* Updated Mailigen API library to version 1.5
+
 = 1.1.2 =
-* Fixed bug where the signup form not working in non-index pages
+* Fixed bug where the signup form was not working in non-index pages
 
 = 1.1.1 =
 * Fixed bug when plugin could not be activated because of a fatal error `Parse error: syntax error, unexpected ':' in ../wp-content/plugins/mailigen-widget/mailigen-widget.php on line 385`. Shorthand form of ternary operator `?:` is available starting from PHP v5.3
@@ -64,8 +76,20 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 == Upgrade Notice ==
 
+= 1.2.0 =
+* Added new features (Thanks to Ted Barnett):
+ * ability to collect checkbox, dropdown, and radio fields (user must replicate values on the plugin settings separated by a comma)
+ * ability to set a widget description text
+ * ability to set a custom Success Message
+ * ability to set an optional Redirect URL after submission
+ * ability to turn off double opt-in
+ * ability to turn off update existing user
+ * ability to turn off send welcome email
+* Added waiting indicator when user needs to wait for a response from server after pressing subscribe button
+* Updated Mailigen API library to version 1.5
+
 = 1.1.2 =
-* Fixed bug where the signup form not working in non-index pages
+* Fixed bug where the signup form was not working in non-index pages
 
 = 1.1.1 =
 * Fixed bug when plugin could not be activated because of a fatal error `Parse error: syntax error, unexpected ':' in ../wp-content/plugins/mailigen-widget/mailigen-widget.php on line 385`. Shorthand form of ternary operator `?:` is available starting from PHP v5.3

@@ -1,11 +1,11 @@
 var $j = jQuery.noConflict();
 
-var error_messages={
-    unknown_response:'Unknown response!'
+var error_messages = {
+    unknown_response: 'Unknown response!'
 };
 var error_box;
 
-var mgGetBaseURL = function(){
+var mgGetBaseURL = function() {
     var url = location.href;
     var baseURL = url.substring(0, url.indexOf('/', 14));
 
@@ -23,50 +23,71 @@ var mgGetBaseURL = function(){
     }
 }
 
-$j( document ).ready(function() {
+$j(document).ready(function() {
 
     /**
      * ---------------------
      * MAILIGEN WIDGET
      * ---------------------
      */
-    var mg_widget_form = $j( '#mg-widget-form' );
-    error_box = $j( ".mg-error-box", mg_widget_form );
+    var mg_widget_form = $j('#mg-widget-form');
+    error_box = $j(".mg-error-box", mg_widget_form);
     error_box.hide();
-    
-    $j( mg_widget_form ).submit(function() {
-        var data = $j( mg_widget_form ).serialize();
-        
+
+    $j(mg_widget_form).submit(function() {
+        var data = $j(mg_widget_form).serialize(),
+                $btn = $j('#mailigen-submit');
+
         error_box.fadeOut();
-        $j( '.mg-error' ).remove();
+        $j('.mg-error').remove();
         
-        $j.post(  mgGetBaseURL() + 'wp-content/plugins/mailigen-widget/ajax.php', data, function(response) {
+        changeBtnState($btn, 'inactive');
+
+        $j.post(mgGetBaseURL() + 'wp-content/plugins/mailigen-widget/ajax.php', data, function(response) {
             response = JSON.parse(response);
-            
-            if(!response) {
+
+            if (!response) {
                 error_box.html('<p>' + error_messages.unknown_response + '</p>').fadeIn();
-                
-            } else if(response.success) {
-                if(response.message.content) {
+
+            } else if (response.success) {
+                if (response.success == 'redirect') {
+                    window.location = response.message;
+                    return;
+                }
+                if (response.message.content) {
                     try {
-                        $j( ".MailigenWidget" ).html(response.message.content);
-                    } catch(e){}
+                        $j(".MailigenWidget").html(response.message.content);
+                    } catch (e) {
+                    }
                 } else {
                     alert(response.message);
                 }
-                
+
             } else {
                 error_box.html('<p>' + response.message + '</p>').fadeIn();
-                if(response.errors) {
-                    $j.each( response.errors, function( key, val ) {
-                        $j( '#' + key ).before( $j( '<div class="mg-error">' + val + '</div>' ) );
+                if (response.errors) {
+                    $j.each(response.errors, function(key, val) {
+                        $j('#' + key).before($j('<div class="mg-error">' + val + '</div>'));
                     });
                 }
             }
             return false;
+        }).always(function() {
+            changeBtnState($btn, 'active');
         });
+
         return false;
     });
+
+    function changeBtnState($btn, state) {
+        if ('inactive' === state) {
+            $btn.attr('disabled', 'disabled').css('opacity', '0.7');
+            $btn.find('.mg_waiting').css('display', 'block');
+        } else {
+            $btn.removeAttr('disabled').css('opacity', '1');
+            $btn.find('.mg_waiting').hide();
+        }
+    }
 
     /**
      * ---------------------
@@ -74,24 +95,24 @@ $j( document ).ready(function() {
      * ---------------------
      */
 
-    var mg_options_form = $j( '#mg-options-form' );
+    var mg_options_form = $j('#mg-options-form');
 
-    $j( '#mg-fields-list', mg_options_form ).change(function()
+    $j('#mg-fields-list', mg_options_form).change(function()
     {
-        var fields = $j( '#mg-fields-container', mg_options_form );
+        var fields = $j('#mg-fields-container', mg_options_form);
 
-        fields.html( '' ).show();
+        fields.html('').show();
 
-        $j( '<div class="mg-preloader">' ).appendTo( fields );
+        $j('<div class="mg-preloader">').appendTo(fields);
 
         var data = {
-            action: 'reload_fields', 
-            mg_list: $j( this ).val()
+            action: 'reload_fields',
+            mg_list: $j(this).val()
         };
 
-        $j.post( ajaxurl, data, function( response )
+        $j.post(ajaxurl, data, function(response)
         {
-            fields.html( response );
+            fields.html(response);
         });
         return false;
     });
