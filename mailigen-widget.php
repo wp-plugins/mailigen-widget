@@ -4,11 +4,11 @@
   Plugin Name: Mailigen Widget
   Plugin URI: http://www.mailigen.com/assets/files/resources/plugins/wordpress/mailigen-widget.zip
   Description: Adds Mailigen signup form to your sidebar.
-  Version: 1.1.2
+  Version: 1.2.0
   Author: Mailigen
   Author URI: http://www.mailigen.com
 
-  Copyright 2013 Mailigen (email: info@mailigen.com)
+  Copyright 2015 Mailigen (email: info@mailigen.com)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -90,6 +90,9 @@ class Mailigen_Widget extends WP_Widget {
         if ('POST' == $_SERVER['REQUEST_METHOD']) {
             $fields = array();
             foreach ($_POST as $key => $value) {
+                if (is_array($value)) {
+                    $value = implode("||", $value);
+                }
                 if (!in_array($key, array('action'))) {
                     $fields[$key] = esc_attr($value);
                 }
@@ -97,6 +100,13 @@ class Mailigen_Widget extends WP_Widget {
             $apiKey = $this->getOption('mg_apikey');
             $listId = $this->getOption('mg_fields_list');
             $errors = $this->validate($fields);
+            $current_widget_options = get_option($this->option_name);
+            $email_type = 'html';
+            $double_optin = $current_widget_options[$this->number]['double_optin'];
+            $update_existing = $current_widget_options[$this->number]['update_existing'];
+            $send_welcome = $current_widget_options[$this->number]['send_welcome'];
+            $success_msg = $current_widget_options[$this->number]['success_msg'];
+            $redirect_url = $current_widget_options[$this->number]['redirect_url'];
 
             if (count($errors) > 0) {
                 $response['message'] = 'Some fields require proper input!';
@@ -105,19 +115,16 @@ class Mailigen_Widget extends WP_Widget {
             }
 
             $api = new MGAPI($apiKey);
-            $result = $api->listSubscribe($listId, $fields['EMAIL'], $fields, 'html', true, false, true);
+            $result = $api->listSubscribe($listId, $fields['EMAIL'], $fields, $email_type, $double_optin, $update_existing, $send_welcome);
 
             if ($api->errorCode) {
                 $response['message'] = $api->errorMessage . ' (#' . $api->errorCode . ')';
+            } elseif ($redirect_url != '') {
+                $response['success'] = 'redirect';
+                $response['message'] = $redirect_url;
             } else {
                 $response['success'] = true;
-                $response['message'] = array('content' => '
-                    <div class="signup-thanks-box">
-                        <h2>Almost Finished...</h2>
-                        <p>We need to confirm your email address.</p>
-                        <p>To complete the subscription process, please click the link in the email we just sent you.</p>                    
-                    </div>
-                ');
+                $response['message'] = array('content' => '<div class="signup-thanks-box">' . $success_msg . '</div>');
             }
         }
         die(json_encode($response));
@@ -163,7 +170,14 @@ class Mailigen_Widget extends WP_Widget {
 
         $instance = $old_instance;
         $instance['title'] = strip_tags($new_instance['title']);
+        $instance['desc'] = strip_tags($new_instance['desc']);
         $instance['button_name'] = strip_tags($new_instance['button_name']);
+        $allowed_tags = wp_kses_allowed_html('post');
+        $instance['success_msg'] = wp_kses($new_instance['success_msg'], $allowed_tags);
+        $instance['redirect_url'] = strip_tags($new_instance['redirect_url']);
+        $instance['double_optin'] = (isset($new_instance['double_optin']) ? true : false);
+        $instance['update_existing'] = (isset($new_instance['update_existing']) ? true : false);
+        $instance['send_welcome'] = (isset($new_instance['send_welcome']) ? true : false);
         return $instance;
     }
 
@@ -175,7 +189,16 @@ class Mailigen_Widget extends WP_Widget {
         $instance = wp_parse_args(
                 (array) $instance, array(
             'title' => __('Signup For Our Mailing List'),
+            'desc' => __('Enter your email address below.'),
             'button_name' => __('Subscribe'),
+            'success_msg' => __('<h2>Almost Finished...</h2>' .
+                    '<p>We need to confirm your email address.</p>' .
+                    '<p>To complete the subscription process, please click the link in the email we just sent you.</p>'
+            ),
+            'redirect_url' => __(''),
+            'double_optin' => true,
+            'update_existing' => false,
+            'send_welcome' => true,
                 )
         );
         list( $id, $name, $value ) = array(
@@ -190,6 +213,17 @@ class Mailigen_Widget extends WP_Widget {
         echo "</p>";
 
         list( $id, $name, $value ) = array(
+            $this->get_field_id('desc'),
+            $this->get_field_name('desc'),
+            esc_attr($instance['desc'])
+        );
+        echo "<p>";
+        echo "<label for='{$id}'>";
+        echo "Description: <input id='{$id}' name='{$name}' type='text' value='{$value}' class='widefat' />";
+        echo "</label>";
+        echo "</p>";
+
+        list( $id, $name, $value ) = array(
             $this->get_field_id('button_name'),
             $this->get_field_name('button_name'),
             esc_attr($instance['button_name'])
@@ -199,6 +233,106 @@ class Mailigen_Widget extends WP_Widget {
         echo "Button Name: <input id='{$id}' name='{$name}' type='text' value='{$value}' class='widefat' />";
         echo "</label>";
         echo "</p>";
+
+        list( $id, $name, $value ) = array(
+            $this->get_field_id('success_msg'),
+            $this->get_field_name('success_msg'),
+            esc_textarea($instance['success_msg'])
+        );
+        echo "<p>";
+        echo "<label for='{$id}'>Success Message:</label>";
+        echo "<textarea rows='5' id='{$id}' name='{$name}' class='widefat'>{$value}</textarea>";
+        echo "</p>";
+
+        list( $id, $name, $value ) = array(
+            $this->get_field_id('redirect_url'),
+            $this->get_field_name('redirect_url'),
+            esc_attr($instance['redirect_url'])
+        );
+        echo "<p>";
+        echo "<label for='{$id}'>";
+        echo "Redirect URL (optional): <input id='{$id}' name='{$name}' type='text' value='{$value}' class='widefat' />";
+        echo "</label>";
+        echo "</p>";
+
+        list( $id, $name, $value ) = array(
+            $this->get_field_id('double_optin'),
+            $this->get_field_name('double_optin'),
+            esc_textarea($instance['double_optin'])
+        );
+        $checked = ($value == true ? 'checked' : '');
+        echo "<p>";
+        echo "<label for='{$id}'><input id='{$id}' name='{$name}' type='checkbox' value='true' class='' {$checked} /> Double Opt-In</label>";
+        echo "</p>";
+
+        list( $id, $name, $value ) = array(
+            $this->get_field_id('update_existing'),
+            $this->get_field_name('update_existing'),
+            esc_textarea($instance['update_existing'])
+        );
+        $checked = ($value == true ? 'checked' : '');
+        echo "<p>";
+        echo "<label for='{$id}'><input id='{$id}' name='{$name}' type='checkbox' value='true' class='' {$checked} /> Update Existing User</label>";
+        echo "</p>";
+
+        list( $id, $name, $value ) = array(
+            $this->get_field_id('send_welcome'),
+            $this->get_field_name('send_welcome'),
+            esc_textarea($instance['send_welcome'])
+        );
+        $checked = ($value == true ? 'checked' : '');
+        echo "<p>";
+        echo "<label for='{$id}'><input id='{$id}' name='{$name}' type='checkbox' value='true' class='' {$checked} /> Send Welcome Email</label>";
+        echo "</p>";
+    }
+
+    /**
+     * Show form field
+     */
+    function showField($args = array()) {
+
+        extract($args);
+
+        $class = ( $class != '' ) ? " {$class}" : null;
+        switch ($type) {
+
+            // text, email
+            case 'text':
+            case 'email':
+                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                echo "<dd><input id='{$name}' type='text' name='{$name}' maxlength='100' class='{$class}' /></dd>";
+                break;
+
+
+            // dropdown box
+            case 'dropdown':
+                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                echo "<dd><select class='{$class}' name='{$name}'>";
+                foreach ($choices as $value => $title) {
+                    $title = esc_html($title);
+                    echo "<option value='{$title}'>{$title}</option>";
+                }
+                echo "</select></dd>";
+                break;
+
+            // grouping box
+            case 'grouping':
+                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                foreach ($choices as $value => $title) {
+                    $title = esc_html($title);
+                    echo "<dd><input name='{$name}[]' value='{$title}' type='checkbox'> <small class='{$class}'>{$title}</small></dd>";
+                }
+                break;
+
+            // radio box
+            case 'radio':
+                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                foreach ($choices as $value => $title) {
+                    $title = esc_html($title);
+                    echo "<dd><input name='{$name}' value='{$title}' type='radio'> <small class='{$class}'>{$title}</small></dd>";
+                }
+                break;
+        }
     }
 
     /**
@@ -207,29 +341,36 @@ class Mailigen_Widget extends WP_Widget {
     function widget($args, $instance) {
 
         extract($args, EXTR_SKIP);
-
+        echo $before_widget;
         echo empty($instance['title']) ? ' ' : $before_title . apply_filters('widget_title', $instance['title']) . $after_title;
+        $description_txt = empty($instance['desc']) ? __('Enter your email address below.') : apply_filters('widget_desc', $instance['desc']);
         $button_name = empty($instance['button_name']) ? __('Subscribe') : apply_filters('widget_button_name', $instance['button_name']);
 
         if (!$this->options['mg_fields']) {
             echo "Please set up your Mailigen plugin!";
             return;
         };
-        echo $before_widget;
 
+        echo "<p>" . $description_txt . "</p>";
         echo "<form id='mg-widget-form' method='post' action=''>";
         echo "<input type='hidden' name='action' value='mailigen_subscribe'>";
         echo '<div class="mg-error-box">&nbsp;</div>';
         echo "<dl class='mailigen-form'>";
         foreach ($this->options['mg_fields'] as $name => $field) {
             $req = $field[2] == 1 ? '* ' : '';
-            echo "<dt><label for='{$name}'>{$req}{$field[0]}</label></dt>";
-            echo "<dd><input id='{$name}' type='text' name='{$name}' maxlength='100' /></dd>";
+            $field_vals = array(
+                'req' => $req,
+                'name' => $name,
+                'type' => $field[1],
+                'title' => $field[0],
+                'class' => $name,
+                'choices' => split(',', $field[3])
+            );
+            $this->showField($field_vals);
         }
         echo "</dl>";
-        echo "<dd><input id='mailigen-submit' type='submit' name='mailigen_submit' value='" . $button_name . "' /></dd>";
+        echo "<dd><button id='mailigen-submit' type='submit' name='mailigen_submit'>" . $button_name . "<span class='mg_waiting'></span></button></dd>";
         echo "</form>";
-
         echo $after_widget;
     }
 
@@ -310,7 +451,6 @@ class Mailigen_Options {
                 'value' => __('Connect to Mailigen')
             ),
             // lists section fields
-
             'mg_apikey' => array(
                 'id' => 'mg-apikey',
                 'section' => 'sect_mg_lists',
@@ -330,7 +470,6 @@ class Mailigen_Options {
                 'choices' => $this->getFieldsLists()
             ),
             // list fields
-
             'mg_fields' => array(
                 'id' => 'mg-fields',
                 'section' => 'sect_mg_fields',
@@ -343,14 +482,6 @@ class Mailigen_Options {
                 'type' => 'buttons',
                 'title' => '&nbsp;'
             ),
-//            'mg_update' => array(
-//                'id' => 'mg-update',
-//                'section' => 'sect_mg_fields',
-//                'type' => 'submit',
-//                'title' => '&nbsp;',
-//                'value' => __('Save Settings'),
-//                'class' => 'button-primary'
-//            ),
         );
     }
 
@@ -478,17 +609,18 @@ class Mailigen_Options {
         foreach ($this->getListFieldsVars() as $id => $params) {
             foreach ($fields as $tag => $title) {
                 if ($params['tag'] == $tag) {
-                    $fields[$tag] = array(
+                    $saved_fields[$tag] = array(
                         $params['name'],
                         $params['field_type'],
-                        $params['req']
+                        $params['req'],
+                        $fields[$tag . '_values']
                     );
                 }
             }
         }
         $this->options['mg_apikey'] = $apikey;
         $this->options['mg_fields_list'] = $listId;
-        $this->options['mg_fields'] = $fields;
+        $this->options['mg_fields'] = $saved_fields;
 
         update_option(
                 'mailigen_options', $this->options
@@ -686,6 +818,9 @@ class Mailigen_Options {
                     }
                     echo "{$field['name']}<br/>";
                     echo "</label>";
+                    if (($field['field_type'] == 'grouping') || ($field['field_type'] == 'dropdown') || ($field['field_type'] == 'radio')) {
+                        echo "<input type='text' placeholder='enter values from Mailigen' name='mailigen_options[mg_fields][{$field['tag']}_values]' value='{$options['mg_fields'][$field['tag']][3]}'><br><span class='description'>Comma Separated</span>";
+                    }
                 } echo "</fieldset>";
                 break;
         }

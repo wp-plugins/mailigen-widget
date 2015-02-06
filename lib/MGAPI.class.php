@@ -1,26 +1,25 @@
 <?php
 
 class MGAPI {
-
-    var $version = "1.1";
+    var $version = "1.5";
     var $errorMessage;
     var $errorCode;
-
+    
     /**
      * API server adrese
      */
     var $apiUrl;
-
+    
     /**
      * Default to a 300 second timeout on server calls
      */
-    var $timeout = 300;
-
+    var $timeout = 300; 
+    
     /**
      * Default to a 8K chunk size
      */
     var $chunkSize = 8192;
-
+    
     /**
      * Lietotaja API atslega
      */
@@ -30,1159 +29,1604 @@ class MGAPI {
      * Izmantot ssl: false - ne, true - ja
      */
     var $secure = false;
-
+    
     /**
      * Pieslegties pie MailiGen API
      * 
      * @param string $apikey Jusu MailiGen API atslega
-     * @param string $secure Izmantot vai neizmantot ssl pieslegğanos
+     * @param string $secure Izmantot vai neizmantot ssl pieslegÂšanos
      */
     function MGAPI($apikey, $secure = false) {
         $this->secure = $secure;
         $this->apiUrl = parse_url("http://api.mailigen.com/" . $this->version . "/?output=php");
-        if (isset($GLOBALS["mg_api_key"]) && $GLOBALS["mg_api_key"] != "") {
+        if ( isset($GLOBALS["mg_api_key"]) && $GLOBALS["mg_api_key"]!="" ){
             $this->api_key = $GLOBALS["mg_api_key"];
         } else {
             $this->api_key = $GLOBALS["mg_api_key"] = $apikey;
         }
     }
-
-    function setTimeout($seconds) {
-        if (is_int($seconds)) {
+    function setTimeout($seconds){
+        if (is_int($seconds)){
             $this->timeout = $seconds;
             return true;
         }
     }
-
-    function getTimeout() {
+    function getTimeout(){
         return $this->timeout;
     }
-
-    function useSecure($val) {
-        if ($val === true) {
+    function useSecure($val){
+        if ($val === true){
             $this->secure = true;
         } else {
             $this->secure = false;
         }
     }
+	
+	/**
+	* NoÅ†emam nost statusu, kas lika kampaÅ†u izsÅ«tÄ«t kaut kad nÄkotnÄ“
+	*
+	* @example mgapi_campaignUnschedule.php
+	* @example xml-rpc_campaignUnschedule.php
+	*
+	* @param string $cid KampaÅ†as, kurai vajag noÅ†emt izsÅ«tÄ«Å¡anas laiku kaut kad nÄkotnÄ“, ID
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function campaignUnschedule($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignUnschedule", $params);
+	}
+	
+	/**
+	* IestÄdam laiku, kad izsÅ«tÄ«t kampaÅ†u
+	*
+	* @example mgapi_campaignSchedule.php
+	* @example xml-rpc_campaignSchedule.php
+	*
+	* @param string $cid KampaÅ†as, kurai vajag iestÄdÄ«t izsÅ«tÄ«Å¡anas laiku, ID
+	* @param string $schedule_time Laiks, kad izsÅ«tÄ«t. Laiku jÄnorÄda Å¡ÄdÄ formÄtÄ YYYY-MM-DD HH:II:SS pÄ“c <strong>GMT</strong>
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function campaignSchedule($cid, $schedule_time) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["schedule_time"] = $schedule_time;
+		return $this->callServer("campaignSchedule", $params);
+	}
+	
+	/**
+	* Atjaunojam auto atbildÄ“tÄja izsÅ«tÄ«Å¡anu
+	*
+	* @example mgapi_campaignResume.php
+	* @example xml-rpc_campaignResume.php
+	*
+	* @param string $cid KampaÅ†as, kuru vajag atsÄkt, ID
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function campaignResume($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignResume", $params);
+	}
+	
+	/**
+	* ApstÄdinam uz laiku autoatbildÄ“tÄju
+	*
+	* @example mgapi_campaignPause.php
+	* @example xml-rpc_campaignPause.php
+	*
+	* @param string $cid KampaÅ†as, kuru vajag apstÄdinÄt, ID
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function campaignPause($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignPause", $params);
+	}
+	
+	/**
+	* NosÅ«tÄ«t kampaÅ†u nekavÄ“joties
+	*
+	* @example mgapi_campaignSendNow.php
+	* @example xml-rpc_campaignSendNow.php
+	*
+	* @param string $cid KampaÅ†as, kuru vajag nosÅ«tÄ«t, ID
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function campaignSendNow($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignSendNow", $params);
+	}
+	
+	/**
+	* NosÅ«tam testa vÄ“stuli uz norÄdÄ«tajiem epastiem
+	*
+	* @example mgapi_campaignSendTest.php
+	* @example xml-rpc_campaignSendTest.php
+	*
+	* @param string $cid KampaÅ†as, kur vÄ“lamies notestÄ“t, ID
+	* @param array $test_emails MasÄ«vs, kas satur epastus, uz kuriem nosÅ«tÄ«t vÄ“stuli
+	* @param string $send_type Nav obligÄts. Ja vÄ“laties nosÅ«tÄ«t abus formÄtus, norÄdiet "html", ja tikai teksta, tad "plain"
+	* @return boolean true ja veiksmÄ«gi
+	*/
+	function campaignSendTest($cid, $test_emails = array(), $send_type = NULL) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["test_emails"] = $test_emails;
+		$params["send_type"] = $send_type;
+		return $this->callServer("campaignSendTest", $params);
+	}
+	
+	/**
+	* Atrodam visus lietotÄja Å¡ablonus
+	*
+	* @example mgapi_campaignTemplates.php
+	* @example xml-rpc_campaignTemplates.php
+	*
+	* @return array MasÄ«vs, kas satur Å¡ablonus
+	* @returnf integer id Å ablona ID
+	* @returnf string name Å ablona nosaukums
+	* @returnf string layout Å ablona izkÄrtojums - "basic", "left_column", "right_column" vai "postcard"
+	* @returnf string preview_image URL adrese lÄ«dz priekÅ¡skatÄ«juma attÄ“lam
+	* @returnf array source Å ablona HTML kods
+	*/
+	function campaignTemplates() {
+		$params = array();
+		return $this->callServer("campaignTemplates", $params);
+	}
+	
+	/**
+	* Izveidojam jaunu kampaÅ†u
+	*
+	* @example mgapi_campaignCreate.php
+	* @example xml-rpc_campaignCreate.php
+	*
+	* @param string $type KampaÅ†as veids: "html", "plain", "auto"
+	* @param array $options MasÄ«vs ar kampaÅ†as parametriem
+			string/array list_id Saraksta id, to var atrast r lists()
+			string subject VÄ“stules virsraksts
+			string from_email Epasts, uz kuru varÄ“s nosÅ«tÄ«t atbildes epastu
+			string from_name VÄrds, kas parÄdÄ«sies pie nosÅ«tÄ«tÄja
+			string to_email Merge vÄ“rtÄ«ba, kas parÄdÄ«sies pie To: lauka (tas nav epasts)
+			array tracking Nav obligÄts. Statistikas parametru masÄ«vs, tiek izmantotas Å¡Ädas atslÄ“gas: "opens", "html_clicks" un "text_clicks". PÄ“c noklusÄ“juma tiek skaitÄ«ta atvÄ“rÅ¡ana un HTML klikÅ¡Ä·i
+			string title Nav obligÄts. KampaÅ†as nosaukums. PÄ“c noklusÄ“juma tiek izmantots vÄ“stules virsraksts
+			array analytics Nav obligÄts. MasÄ«vs ar skaitÄ«tÄju informÄciju. Google gadÄ«jumÄ ir Å¡Äds pielietojums "google"=>"jÅ«su_google_analytics_atslÄ“ga". "jÅ«su_google_analytics_atslÄ“ga" tiks pievienota visiem linkiem, statistiku varÄ“s apskatÄ«ties klienta Google Analytics kontÄ
+			boolean generate_text Nav obligÄts. Ja nav norÄdÄ«ts plain teksts, tiks Ä£enerÄ“ts tekst no HTML. PÄ“c noklusÄ“juma ir false
+			boolean auto_footer Nav obligÄts. IekÄ¼aut vai neiekÄ¼aut automÄtisko kÄjeni vÄ“stules saturÄ. Å is ir pieejams lietotÄjie ar Pro paku. PÄ“c noklusÄ“juma ir false
+			boolean authenticate Nav obligÄts. IeslÄ“gt epastu autentifikÄciju. Å is strÄdÄs, ja ir pievienoti un aktivizÄ“ti autentificÄ“ti domÄ“ni sistÄ“mÄ. PÄ“c noklusÄ“juma ir false
+			string sender Nav obligÄts. Epasta adrese. Tiek izmantots, lai norÄdÄ«tu citu sÅ«tÄ«tÄja informÄciju. Ir pieejams lietotÄjiem ar Pro paku.
+			integer/array segment_id Nav obligÄts. Satur segmenta ID, kuriem izsÅ«tÄ«t kampaÅ†u
+			boolean inline_img Nav obligÄts. Izmantot vai nÄ“ inline bildes. Å is ir pieejams ar atbilstoÅ¡u addonu. PÄ“c noklusÄ“juma ir false
+			string ln Nav obligÄts. Nosaka, kÄdÄ valodÄ bÅ«s kÄjene un galvene. IespÄ“jamÄs vÄ“rtÄ«bas: cn, dk, en, ee, fi, fr, de, it, jp, lv, lt, no, pl, pt, ru, es, se
+	
+	* @param array $content MasÄ«vs, kas satur vÄ“stules saturu. StruktÅ«ra:
+			"html" HTML saturs
+			"plain" saturs plain vÄ“stulei
+			"url" Adrese, no kuras importÄ“t HTML tekstu. Ja netiek norÄdÄ«ts plain teksts, tad vajag ieslÄ“gt generate_text, lai tiktu Ä£enerÄ“ts plain teksta vÄ“stules saturs. Ja tiek norÄdÄ«ta Å¡Ä« vÄ“rtÄ«ba, tad tiek pÄrrakstÄ«tas augstÄk minÄ“tÄs vÄ“rtÄ«bas
+			"archive" Ar Base64 kodÄ“ts arhÄ«va fails. Ja tiek norÄdÄ«ta Å¡Ä« vÄ“rtÄ«ba, tad tiek pÄrrakstÄ«tas augstÄk minÄ“tÄs vÄ“rtÄ«bas
+			"archive_type" Nav obligÄts. PieÄ¼aujamie arhÄ«va formÄti: zip, tar.gz, tar.bz2, tar, tgz, tbz . Ja nav norÄdÄ«ts, tad pÄ“c noklusÄ“juma tiks izmantots zip
+			integer template_id Nav obligÄts. LietotÄja Å¡ablona id, nu kura tiks Ä£enerÄ“ts HTML saturs
+	
+	* @param array $type_opts Nav obligÄts - 
+	
+			AutoatbildÄ“tÄja kampaÅ†a, Å¡is masÄ«vs satur Å¡Ädu informÄciju:
+			string offset-units KÄda vÄ“rtÄ«ba no "day", "week", "month", "year". ObligÄti jÄnorÄda
+			string offset-time VÄ“rtÄ«ba, kas ir lielÄka par 0. ObligÄti jÄnorÄda
+			string offset-dir Viena vÄ“rtÄ«ba no "before" vai "after". PÄ“c noklusÄ“juma "after"
+			string event Nav obligÄts. IzsÅ«tÄ«t pÄ“c "signup" (parakstÄ«Å¡anÄs, pÄ“c noklusÄ“juma), "date" (datuma) vai "annual" (ikgadÄ“js)
+			string event-datemerge Nav obligÄts. Merge lauks, kurÅ¡ tiek Å†emts vÄ“rÄ, kad izsÅ«tÄ«t. Å is ir nepiecieÅ¡ams, ja event ir norÄdÄ«t "date" vai "annual"
+	
+	*
+	* @return string AtgrieÅ¾ jaunÄs kampaÅ†as ID
+	*/
+	function campaignCreate($type, $options, $content, $type_opts = NULL) {
+		$params = array();
+		$params["type"] = $type;
+		$params["options"] = $options;
+		$params["content"] = $content;
+		$params["type_opts"] = $type_opts;
+		return $this->callServer("campaignCreate", $params);
+	}
+	
+	/**
+	* Atjaunojam kampaÅ†as, kura vÄ“l nav nosÅ«tÄ«ta, parametrus
+	*   
+	*  
+	*  UzmanÄ«bu:<br/><ul>
+	*        <li>Ja JÅ«s izmantojat list_id, visi iepriekÅ¡Ä“jie saraksti tiks izdzÄ“sti.</li>
+	*        <li>Ja JÅ«s izmantojat template_id, tiks pÄrrakstÄ«ts HTML saturs ar Å¡ablona saturu</li>
+	*
+	* @example mgapi_campaignUpdate.php
+	* @example xml-rpc_campaignUpdate.php
+	*
+	* @param string $cid KampaÅ†as, kuru vajag labot, ID
+	* @param string $name Parametra nosaukums (skatÄ«ties pie campaignCreate() options lauku ). IespÄ“jamie parametri: subject, from_email, utt. Papildus parametri ir content. GadÄ«jumÄ, ja vajag mainÄ«t "type_opts", kÄ "name" vajag norÄdÄ«t, piemÄ“ram, "auto".
+	* @param mixed  $value IespÄ“jamÄs vÄ“rtÄ«bas parametram ( skatÄ«ties campaignCreate() options lauku )
+	* @return boolean true, ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function campaignUpdate($cid, $name, $value) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["name"] = $name;
+		$params["value"] = $value;
+		return $this->callServer("campaignUpdate", $params);
+	}
+	
+	/**
+	* KopÄ“jam kampaÅ†u
+	*
+	* @example mgapi_campaignReplicate.php
+	* @example xml-rpc_campaignReplicate.php
+	*
+	* @param string $cid KampaÅ†as, kuru vajag kopÄ“t, ID
+	* @return string AtgrieÅ¾am jaunÄs kampaÅ†as ID
+	*/
+	function campaignReplicate($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignReplicate", $params);
+	}
+	
+	/**
+	* Tiek dzÄ“sta neatgriezensiki kampaÅ†a. Esiet uzmanÄ«gi!
+	*
+	* @example mgapi_campaignDelete.php
+	* @example xml-rpc_campaignDelete.php
+	*
+	* @param string $cid KampaÅ†as, kuru vajag dzÄ“st, ID
+	* @return boolean true ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function campaignDelete($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignDelete", $params);
+	}
+	
+	/**
+	* AtgrieÅ¾am kampaÅ†u sarakstu. Var pielietot filtru, lai detalizÄ“t atlasÄ«tu
+	*
+	* @example mgapi_campaigns.php
+	* @example xml-rpc_campaigns.php
+	*
+	* @param array $filters Nav obligÄts. MasÄ«vs ar parametriem:
+			string  campaign_id Nav obligÄts, kampaÅ†as id
+			string  list_id Nav obligÄts, saraksta id. To var atrast ar lists()
+			string  status Nav obligÄts. Var atrast kampaÅ†u pÄ“c statusa: sent, draft, paused, sending
+			string  type Nav obligÄts. KampaÅ†as tips: plain, html
+			string  from_name Nav obligÄts. Atlasa kampÄnu pÄ“c nosÅ«tÄ«tÄja vÄrda
+			string  from_email Nav obligÄts. Atlasa kampaÅ†as pÄ“c "Reply-to" epasta
+			string  title Nav obligÄts. Atlasa pÄ“c kampaÅ†as nosaukuma
+			string  subject Nav obligÄts. Atlasa pÄ“c vÄ“stules virsraksta ("Subject")
+			string  sendtime_start Nav obligÄts. Atlasa vÄ“stules, kas izsÅ«tÄ«tas pÄ“c Å¡Ä« datuma/laika. FormÄts - YYYY-MM-DD HH:mm:ss (24hr)
+			string  sendtime_end Nav obligÄts. Atlasa vÄ“stules, kas izsÅ«tÄ«tas pirms Å¡Ä« datuma/laika. FormÄts - YYYY-MM-DD HH:mm:ss (24hr)
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 25. MaksimÄlÄ vÄ“rtÄ«ba ir 1000
+	* @return array AgrieÅ¾ masÄ«vu ar kampaÅ†u sarakstu
+	* @returnf string id KampaÅ†as id. To izmanto pÄrÄ“jÄm funkcijÄm
+	* @returnf integer web_id KampaÅ†as id, kas tiek izmanots web versijÄ
+	* @returnf string title KampaÅ†as virsraksts
+	* @returnf string type KampaÅ†as tips (html,plain,auto)
+	* @returnf date create_time KampaÅ†as izveidoÅ¡anas datums
+	* @returnf date send_time KampÄnas nosÅ«tÄ«Å¡anas datums
+	* @returnf integer emails_sent Epastu skaits, uz kuriem nosÅ«tÄ«ta kampaÅ†a
+	* @returnf string status KampaÅ†as statuss (sent, draft, paused, sending)
+	* @returnf string from_name VÄrds, kas parÄdÄs From laukÄ
+	* @returnf string from_email E-pasts, uz kuru saÅ†Ä“mÄ“js var nosÅ«tÄ«t atbildi
+	* @returnf string subject VÄ“stules virsraksts
+	* @returnf boolean to_email  PersonalizÄ“t "To:" lauku
+	* @returnf string archive_url ArhÄ«va saite uz kampaÅ†u
+	* @returnf boolean analytics IntegrÄ“t vai neitegrÄ“t Google Analytics
+	* @returnf string analytcs_tag  Google Analytics nosaukums kampaÅ†ai
+	* @returnf boolean track_clicks_text SkaitÄ«t vai neskaitÄ«t klikÅ¡Ä·us plain vÄ“stulÄ“
+	* @returnf boolean track_clicks_html SkaitÄ«t vai neskaitÄ«t klikÅ¡Ä·us HTML vÄ“stulÄ“
+	* @returnf boolean track_opens SkaitÄ«t vai neskaitÄ«t atvÄ“rÅ¡anu
+	*/
+	function campaigns($filters = array(), $start = 0, $limit = 25) {
+		$params = array();
+		$params["filters"] = $filters;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaigns", $params);
+	}
+	
+	/**
+	* Given a list and a campaign, get all the relevant campaign statistics (opens, bounces, clicks, etc.)
+	*
+	* @example mgapi_campaignStats.php
+	* @example xml-rpc_campaignStats.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @return array MasÄ«vs, kas satur kampaÅ†as statistiku
+	* @returnf integer hard_bounces NepiegÄdÄto/nepareizo epastu skaits
+	* @returnf integer soft_bounces Pagaidu nepiegÄdÄto 
+	* @returnf integer blocked_bounces BloÄ·Ä“to skaits
+	* @returnf integer temporary_bounces ÄªslaicÄ«gi atgriezto skaits
+	* @returnf integer generic_bounces Nepareizo epastu skaits
+	* @returnf integer unsubscribes Epastu skaits, kas atrakstÄ«jÄs no kampaÅ†as
+	* @returnf integer forwards Skaits, cik reizes vÄ“stule ir pÄrsÅ«tÄ«ta
+	* @returnf integer opens Skaits, cik reizes atvÄ“rts
+	* @returnf date last_open Datums, kad pÄ“dÄ“jo reizi atvÄ“rts
+	* @returnf integer unique_opens UnikÄlo atvÄ“rÅ¡anu skait
+	* @returnf integer clicks Skaits, cik daudz ir spiests uz linkiem
+	* @returnf integer unique_clicks UnikÄlie klikÅ¡Ä·i uz saitÄ“m
+	* @returnf date last_click Datums, kad pÄ“dÄ“jo reizi spiests uz linkiem
+	* @returnf integer users_who_clicked LietotÄju skaits, kas spieduÅ¡i uz saitÄ“m
+	* @returnf integer emails_sent KopÄ“jais skaits, cik vÄ“stules ir izsÅ«tÄ«tas
+	*/
+	function campaignStats($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignStats", $params);
+	}
+	
+	/**
+	* Atrodam kampaÅ†as visus linkus
+	*
+	* @example mgapi_campaignClickStats.php
+	* @example xml-rpc_campaignClickStats.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @return struct urls SaiÅ¡u masÄ«vs, kur atslÄ“ga ir saite
+	* @returnf integer clicks KopÄ“jais klikÅ¡Ä·u skaits
+	* @returnf integer unique UnikÄlo klikÅ¡Ä·u skaits
+	*/
+	function campaignClickStats($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignClickStats", $params);
+	}
+	
+	/**
+	* Atrodam Å¡Ä«s kampaÅ†as epastu domÄ“nu statistiku
+	*
+	* @example mgapi_campaignEmailDomainPerformance.php
+	* @example xml-rpc_campaignEmailDomainPerformance.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @return array MasÄ«vs ar epasta domÄ“niem
+	* @returnf string domain DomÄ“na vÄrds
+	* @returnf integer total_sent KopÄ nosÅ«tÄ«to epastu skaits kampaÅ†ai (visi epasti)
+	* @returnf integer emails Uz Å¡o domÄ“nu nosÅ«tÄ«to epstu skaits
+	* @returnf integer bounces NeaizgÄjuÅ¡o epastu skaits
+	* @returnf integer opens UnikÄlo atvÄ“rÅ¡anu skaits
+	* @returnf integer clicks UnikÄlo klikÅ¡Ä·u skaits
+	* @returnf integer unsubs Skaits, cik atrakstÄ«juÅ¡ies
+	* @returnf integer delivered PiegÄdÄto vÄ“stuÄ¼u skaits
+	* @returnf integer emails_pct Skaits, cik epastu procentuÄli ir ar Å¡o domÄ“nu
+	* @returnf integer bounces_pct Skaits, cik procentuÄli no kopÄ“ja skaita nav piegÄdÄts ar Å¡o domÄ“nu
+	* @returnf integer opens_pct Skaits, cik procentuÄli ir atvÄ“rts ar Å¡o domÄ“nu
+	* @returnf integer clicks_pct Skaits, cik procentuÄli no Å¡Ä« domÄ“na ir spieduÅ¡i
+	* @returnf integer unsubs_pct ProcentuÄli, cik daudz no Å¡Ä« domÄ“na ir atrakstÄ«juÅ¡ies
+	*/
+	function campaignEmailDomainPerformance($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignEmailDomainPerformance", $params);
+	}
 
     /**
-     * Noòemam nost statusu, kas lika kampaòu izsûtît kaut kad nâkotnç
-     *
-     * @example mgapi_campaignUnschedule.php
-     * @example xml-rpc_campaignUnschedule.php
-     *
-     * @param string $cid Kampaòas, kurai vajag noòemt izsûtîğanas laiku kaut kad nâkotnç, ID
-     * @return boolean true ja ir veiksmîgi
-     */
-    function campaignUnschedule($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignUnschedule", $params);
-    }
-
-    /**
-     * Iestâdam laiku, kad izsûtît kampaòu
-     *
-     * @example mgapi_campaignSchedule.php
-     * @example xml-rpc_campaignSchedule.php
-     *
-     * @param string $cid Kampaòas, kurai vajag iestâdît izsûtîğanas laiku, ID
-     * @param string $schedule_time Laiks, kad izsûtît. Laiku jânorâda ğâdâ formâtâ YYYY-MM-DD HH:II:SS pçc <strong>GMT</strong>
-     * @return boolean true ja ir veiksmîgi
-     */
-    function campaignSchedule($cid, $schedule_time) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["schedule_time"] = $schedule_time;
-        return $this->callServer("campaignSchedule", $params);
-    }
-
-    /**
-     * Atjaunojam auto atbildçtâja izsûtîğanu
-     *
-     * @example mgapi_campaignResume.php
-     * @example xml-rpc_campaignResume.php
-     *
-     * @param string $cid Kampaòas, kuru vajag atsâkt, ID
-     * @return boolean true ja ir veiksmîgi
-     */
-    function campaignResume($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignResume", $params);
-    }
-
-    /**
-     * Apstâdinam uz laiku autoatbildçtâju
-     *
-     * @example mgapi_campaignPause.php
-     * @example xml-rpc_campaignPause.php
-     *
-     * @param string $cid Kampaòas, kuru vajag apstâdinât, ID
-     * @return boolean true ja ir veiksmîgi
-     */
-    function campaignPause($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignPause", $params);
-    }
-
-    /**
-     * Nosûtît kampaòu nekavçjoties
-     *
-     * @example mgapi_campaignSendNow.php
-     * @example xml-rpc_campaignSendNow.php
-     *
-     * @param string $cid Kampaòas, kuru vajag nosûtît, ID
-     * @return boolean true ja ir veiksmîgi
-     */
-    function campaignSendNow($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignSendNow", $params);
-    }
-
-    /**
-     * Nosûtam testa vçstuli uz norâdîtajiem epastiem
-     *
-     * @example mgapi_campaignSendTest.php
-     * @example xml-rpc_campaignSendTest.php
-     *
-     * @param string $cid Kampaòas, kur vçlamies notestçt, ID
-     * @param array $test_emails Masîvs, kas satur epastus, uz kuriem nosûtît vçstuli
-     * @param string $send_type Nav obligâts. Ja vçlaties nosûtît abus formâtus, norâdiet "html", ja tikai teksta, tad "plain"
-     * @return boolean true ja veiksmîgi
-     */
-    function campaignSendTest($cid, $test_emails = array(), $send_type = NULL) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["test_emails"] = $test_emails;
-        $params["send_type"] = $send_type;
-        return $this->callServer("campaignSendTest", $params);
-    }
-
-    /**
-     * Atrodam visus lietotâja ğablonus
-     *
-     * @example mgapi_campaignTemplates.php
-     * @example xml-rpc_campaignTemplates.php
-     *
-     * @return array Masîvs, kas satur ğablonus
-     * @returnf integer id Ğablona ID
-     * @returnf string name Ğablona nosaukums
-     * @returnf string layout Ğablona izkârtojums - "basic", "left_column", "right_column" vai "postcard"
-     * @returnf string preview_image URL adrese lîdz priekğskatîjuma attçlam
-     * @returnf array source Ğablona HTML kods
-     */
-    function campaignTemplates() {
-        $params = array();
-        return $this->callServer("campaignTemplates", $params);
-    }
-
-    /**
-     * Izveidojam jaunu kampaòu
-     *
-     * @example mgapi_campaignCreate.php
-     * @example xml-rpc_campaignCreate.php
-     *
-     * @param string $type Kampaòas veids: "html", "plain", "auto"
-     * @param array $options Masîvs ar kampaòas parametriem
-      string/array list_id Saraksta id, to var atrast r lists()
-      string subject Vçstules virsraksts
-      string from_email Epasts, uz kuru varçs nosûtît atbildes epastu
-      string from_name Vârds, kas parâdîsies pie nosûtîtâja
-      string to_email Merge vçrtîba, kas parâdîsies pie To: lauka (tas nav epasts)
-      integer template_id Nav obligâts. Lietotâja ğablona id, nu kura tiks ìenerçts HTML saturs
-      array tracking Nav obligâts. Statistikas parametru masîvs, tiek izmantotas ğâdas atslçgas: "opens", "html_clicks" un "text_clicks". Pçc noklusçjuma tiek skaitîta atvçrğana un HTML klikğíi
-      string title Nav obligâts. Kampaòas nosaukums. Pçc noklusçjuma tiek izmantots vçstules virsraksts
-      array analytics Nav obligâts. Masîvs ar skaitîtâju informâciju. Google gadîjumâ ir ğâds pielietojums "google"=>"jûsu_google_analytics_atslçga". "jûsu_google_analytics_atslçga" tiks pievienota visiem linkiem, statistiku varçs apskatîties klienta Google Analytics kontâ
-      boolean generate_text Nav obligâts. Ja nav norâdîts plain teksts, tiks ìenerçts tekst no HTML. Pçc noklusçjuma ir false
-
-     * @param array $content Masîvs, kas satur vçstules saturu. Struktûra:
-      "html" HTML saturs
-      "plain" saturs plain vçstulei
-      "url" Adrese, no kuras importçt HTML tekstu. Ja netiek norâdîts plain teksts, tad vajag ieslçgt generate_text, lai tiktu ìenerçts plain teksta vçstules saturs. Ja tiek norâdîta ğî vçrtîba, tad tiek pârrakstîtas augstâk minçtâs vçrtîbas
-      "archive" Ar Base64 kodçts arhîva fails. Ja tiek norâdîta ğî vçrtîba, tad tiek pârrakstîtas augstâk minçtâs vçrtîbas
-      "archive_type" Nav obligâts. Pieïaujamie arhîva formâti: zip, tar.gz, tar.bz2, tar, tgz, tbz . Ja nav norâdîts, tad pçc noklusçjuma tiks izmantots zip
-
-     * @param array $type_opts Nav obligâts - 
-
-      Autoatbildçtâja kampaòa, ğis masîvs satur ğâdu informâciju:
-      string offset-units Kâda vçrtîba no "day", "week", "month", "year". Obligâti jânorâda
-      string offset-time Vçrtîba, kas ir lielâka par 0. Obligâti jânorâda
-      string offset-dir Viena vçrtîba no "before" vai "after". Pçc noklusçjuma "after"
-      string event Nav obligâts. Izsûtît pçc "signup" (parakstîğanâs, pçc noklusçjuma), "date" (datuma) vai "annual" (ikgadçjs)
-      string event-datemerge Nav obligâts. Merge lauks, kurğ tiek òemts vçrâ, kad izsûtît. Ğis ir nepiecieğams, ja event ir norâdît "date" vai "annual"
-
-     *
-     * @return string Atgrieş jaunâs kampaòas ID
-     */
-    function campaignCreate($type, $options, $content, $type_opts = NULL) {
-        $params = array();
-        $params["type"] = $type;
-        $params["options"] = $options;
-        $params["content"] = $content;
-        $params["type_opts"] = $type_opts;
-        return $this->callServer("campaignCreate", $params);
-    }
-
-    /**
-     * Atjaunojam kampaòas, kura vçl nav nosûtîta, parametrus
-     *   
-     *  
-     *  Uzmanîbu:<br/><ul>
-     *        <li>Ja Jûs izmantojat list_id, visi iepriekğçjie saraksti tiks izdzçsti.</li>
-     *        <li>Ja Jûs izmantojat template_id, tiks pârrakstîts HTML saturs ar ğablona saturu</li>
-     *
-     * @example mgapi_campaignUpdate.php
-     * @example xml-rpc_campaignUpdate.php
-     *
-     * @param string $cid Kampaòas, kuru vajag labot, ID
-     * @param string $name Parametra nosaukums (skatîties pie campaignCreate() options lauku ). Iespçjamie parametri: subject, from_email, utt. Papildus parametri ir content. Gadîjumâ, ja vajag mainît "type_opts", kâ "name" vajag norâdît, piemçram, "auto".
-     * @param mixed  $value Iespçjamâs vçrtîbas parametram ( skatîties campaignCreate() options lauku )
-     * @return boolean true, ja ir veiksmîgi, pretçjâ gadîjumâ atgrieş kïûdas paziòojumu
-     */
-    function campaignUpdate($cid, $name, $value) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["name"] = $name;
-        $params["value"] = $value;
-        return $this->callServer("campaignUpdate", $params);
-    }
-
-    /**
-     * Kopçjam kampaòu
-     *
-     * @example mgapi_campaignReplicate.php
-     * @example xml-rpc_campaignReplicate.php
-     *
-     * @param string $cid Kampaòas, kuru vajag kopçt, ID
-     * @return string Atgrieşam jaunâs kampaòas ID
-     */
-    function campaignReplicate($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignReplicate", $params);
-    }
-
-    /**
-     * Tiek dzçsta neatgriezensiki kampaòa. Esiet uzmanîgi!
-     *
-     * @example mgapi_campaignDelete.php
-     * @example xml-rpc_campaignDelete.php
-     *
-     * @param string $cid Kampaòas, kuru vajag dzçst, ID
-     * @return boolean true ja ir veiksmîgi, pretçjâ gadîjumâ atgrieş kïûdas paziòojumu
-     */
-    function campaignDelete($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignDelete", $params);
-    }
-
-    /**
-     * Atgrieşam kampaòu sarakstu. Var pielietot filtru, lai detalizçt atlasîtu
-     *
-     * @example mgapi_campaigns.php
-     * @example xml-rpc_campaigns.php
-     *
-     * @param array $filters Nav obligâts. Masîvs ar parametriem:
-      string  campaign_id Nav obligâts, kampaòas id
-      string  list_id Nav obligâts, saraksta id. To var atrast ar lists()
-      string  status Nav obligâts. Var atrast kampaòu pçc statusa: sent, draft, paused, sending
-      string  type Nav obligâts. Kampaòas tips: plain, html
-      string  from_name Nav obligâts. Atlasa kampânu pçc nosûtîtâja vârda
-      string  from_email Nav obligâts. Atlasa kampaòas pçc "Reply-to" epasta
-      string  title Nav obligâts. Atlasa pçc kampaòas nosaukuma
-      string  subject Nav obligâts. Atlasa pçc vçstules virsraksta ("Subject")
-      string  sendtime_start Nav obligâts. Atlasa vçstules, kas izsûtîtas pçc ğî datuma/laika. Formâts - YYYY-MM-DD HH:mm:ss (24hr)
-      string  sendtime_end Nav obligâts. Atlasa vçstules, kas izsûtîtas pirms ğî datuma/laika. Formâts - YYYY-MM-DD HH:mm:ss (24hr)
-     * @param integer $start Nav obligâts. Lapa, no kuras izvadît datus. Pçc noklusçjuma ir 0, kas atbilst pirmajai lapai
-     * @param integer $limit Nav obligâts. Rezultâtu skaits lapâ. Pçc noklusçjuma 25. Maksimâlâ vçrtîba ir 1000
-     * @return array Agrieş masîvu ar kampaòu sarakstu
-     * @returnf string id Kampaòas id. To izmanto pârçjâm funkcijâm
-     * @returnf integer web_id Kampaòas id, kas tiek izmanots web versijâ
-     * @returnf string title Kampaòas virsraksts
-     * @returnf string type Kampaòas tips (html,plain,auto)
-     * @returnf date create_time Kampaòas izveidoğanas datums
-     * @returnf date send_time Kampânas nosûtîğanas datums
-     * @returnf integer emails_sent Epastu skaits, uz kuriem nosûtîta kampaòa
-     * @returnf string status Kampaòas statuss (sent, draft, paused, sending)
-     * @returnf string from_name Vârds, kas parâdâs From laukâ
-     * @returnf string from_email E-pasts, uz kuru saòçmçjs var nosûtît atbildi
-     * @returnf string subject Vçstules virsraksts
-     * @returnf boolean to_email  Personalizçt "To:" lauku
-     * @returnf string archive_url Arhîva saite uz kampaòu
-     * @returnf boolean analytics Integrçt vai neitegrçt Google Analytics
-     * @returnf string analytcs_tag  Google Analytics nosaukums kampaòai
-     * @returnf boolean track_clicks_text Skaitît vai neskaitît klikğíus plain vçstulç
-     * @returnf boolean track_clicks_html Skaitît vai neskaitît klikğíus HTML vçstulç
-     * @returnf boolean track_opens Skaitît vai neskaitît atvçrğanu
-     */
-    function campaigns($filters = array(), $start = 0, $limit = 25) {
-        $params = array();
-        $params["filters"] = $filters;
-        $params["start"] = $start;
-        $params["limit"] = $limit;
-        return $this->callServer("campaigns", $params);
-    }
-
-    /**
-     * Given a list and a campaign, get all the relevant campaign statistics (opens, bounces, clicks, etc.)
-     *
-     * @example mgapi_campaignStats.php
-     * @example xml-rpc_campaignStats.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @return array Masîvs, kas satur kampaòas statistiku
-     * @returnf integer hard_bounces Nepiegâdâto/nepareizo epastu skaits
-     * @returnf integer soft_bounces Pagaidu nepiegâdâto 
-     * @returnf integer unsubscribes Epastu skaits, kas atrakstîjâs no kampaòas
-     * @returnf integer forwards Skaits, cik reizes vçstule ir pârsûtîta
-     * @returnf integer opens Skaits, cik reizes atvçrts
-     * @returnf date last_open Datums, kad pçdçjo reizi atvçrts
-     * @returnf integer unique_opens Unikâlo atvçrğanu skait
-     * @returnf integer clicks Skaits, cik daudz ir spiests uz linkiem
-     * @returnf integer unique_clicks Unikâlie klikğíi uz saitçm
-     * @returnf date last_click Datums, kad pçdçjo reizi spiests uz linkiem
-     * @returnf integer users_who_clicked Lietotâju skaits, kas spieduği uz saitçm
-     * @returnf integer emails_sent Kopçjais skaits, cik vçstules ir izsûtîtas
-     */
-    function campaignStats($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignStats", $params);
-    }
-
-    /**
-     * Atrodam kampaòas visus linkus
-     *
-     * @example mgapi_campaignClickStats.php
-     * @example xml-rpc_campaignClickStats.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @return struct urls Saiğu masîvs, kur atslçga ir saite
-     * @returnf integer clicks Kopçjais klikğíu skaits
-     * @returnf integer unique Unikâlo klikğíu skaits
-     */
-    function campaignClickStats($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignClickStats", $params);
-    }
-
-    /**
-     * Atrodam ğîs kampaòas epastu domçnu statistiku
-     *
-     * @example mgapi_campaignEmailDomainPerformance.php
-     * @example xml-rpc_campaignEmailDomainPerformance.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @return array Masîvs ar epasta domçniem
-     * @returnf string domain Domçna vârds
-     * @returnf integer total_sent Kopâ nosûtîto epastu skaits kampaòai (visi epasti)
-     * @returnf integer emails Uz ğo domçnu nosûtîto epstu skaits
-     * @returnf integer bounces Neaizgâjuğo epastu skaits
-     * @returnf integer opens Unikâlo atvçrğanu skaits
-     * @returnf integer clicks Unikâlo klikğíu skaits
-     * @returnf integer unsubs Skaits, cik atrakstîjuğies
-     * @returnf integer delivered Piegâdâto vçstuïu skaits
-     * @returnf integer emails_pct Skaits, cik epastu procentuâli ir ar ğo domçnu
-     * @returnf integer bounces_pct Skaits, cik procentuâli no kopçja skaita nav piegâdâts ar ğo domçnu
-     * @returnf integer opens_pct Skaits, cik procentuâli ir atvçrts ar ğo domçnu
-     * @returnf integer clicks_pct Skaits, cik procentuâli no ğî domçna ir spieduği
-     * @returnf integer unsubs_pct Procentuâli, cik daudz no ğî domçna ir atrakstîjuğies
-     */
-    function campaignEmailDomainPerformance($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignEmailDomainPerformance", $params);
-    }
-
-    /**
-     * Atrodam neeksistçjoğos/nepareizos epastus (hard bounces)
-     *
-     * @example mgapi_campaignHardBounces.php
-     * @example xml-rpc_campaignHardBounces.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @param integer $start Nav obligâts. Lapa, no kuras izvadît datus. Pçc noklusçjuma ir 0, kas atbilst pirmajai lapai
-     * @param integer $limit Nav obligâts. Rezultâtu skaits lapâ. Pçc noklusçjuma 1000. Maksimâlâ vçrtîba ir 15000
-     * @return array Epastu saraksts
-     */
+	* Atrodam neeksistÄ“joÅ¡os/nepareizos epastus (hard bounces)
+	*
+	* @example mgapi_campaignHardBounces.php
+	* @example xml-rpc_campaignHardBounces.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 1000. MaksimÄlÄ vÄ“rtÄ«ba ir 15000
+	* @return array Epastu saraksts
+	*/
     function campaignHardBounces($cid, $start = 0, $limit = 1000) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["start"] = $start;
-        $params["limit"] = $limit;
-        return $this->callServer("campaignHardBounces", $params);
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignHardBounces", $params);
     }
 
     /**
-     * Atrodam pagaidu atgrieztos epastus (soft bounces)
-     *
-     * @example mgapi_campaignSoftBounces.php
-     * @example xml-rpc_campaignSoftBounces.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @param integer $start Nav obligâts. Lapa, no kuras izvadît datus. Pçc noklusçjuma ir 0, kas atbilst pirmajai lapai
-     * @param integer $limit Nav obligâts. Rezultâtu skaits lapâ. Pçc noklusçjuma 1000. Maksimâlâ vçrtîba ir 15000
-     * @return array Epastu saraksts
-     */
+	* Atrodam pagaidu atgrieztos epastus (soft bounces)
+	*
+	* @example mgapi_campaignSoftBounces.php
+	* @example xml-rpc_campaignSoftBounces.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 1000. MaksimÄlÄ vÄ“rtÄ«ba ir 15000
+	* @return array Epastu saraksts
+	*/
     function campaignSoftBounces($cid, $start = 0, $limit = 1000) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["start"] = $start;
-        $params["limit"] = $limit;
-        return $this->callServer("campaignSoftBounces", $params);
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignSoftBounces", $params);
     }
 
     /**
-     * Atrodam visus e-pastus, kas ir atrakstîjuğies no ğîs kampaòas
-     *
-     * @example mgapi_campaignUnsubscribes.php
-     * @example xml-rpc_campaignUnsubscribes.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @param integer $start Nav obligâts. Lapa, no kuras izvadît datus. Pçc noklusçjuma ir 0, kas atbilst pirmajai lapai
-     * @param integer $limit Nav obligâts. Rezultâtu skaits lapâ. Pçc noklusçjuma 1000. Maksimâlâ vçrtîba ir 15000
-     * @return array Epastu saraksts
-     */
+	* Atrodam atgrieztos epastus (blocked bounces)
+	*
+	* @example mgapi_campaignBlockedBounces.php
+	* @example xml-rpc_campaignBlockedBounces.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 1000. MaksimÄlÄ vÄ“rtÄ«ba ir 15000
+	* @return array Epastu saraksts
+	*/
+    function campaignBlockedBounces($cid, $start = 0, $limit = 1000) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignBlockedBounces", $params);
+    }
+
+    /**
+	* Atrodam atgrieztos epastus (temporary bounces)
+	*
+	* @example mgapi_campaignTemporaryBounces.php
+	* @example xml-rpc_campaignTemporaryBounces.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 1000. MaksimÄlÄ vÄ“rtÄ«ba ir 15000
+	* @return array Epastu saraksts
+	*/
+    function campaignTemporaryBounces($cid, $start = 0, $limit = 1000) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignTemporaryBounces", $params);
+    }
+
+    /**
+	* Atrodam atgrieztos epastus (generic bounces)
+	*
+	* @example mgapi_campaignGenericBounces.php
+	* @example xml-rpc_campaignGenericBounces.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 1000. MaksimÄlÄ vÄ“rtÄ«ba ir 15000
+	* @return array Epastu saraksts
+	*/
+    function campaignGenericBounces($cid, $start = 0, $limit = 1000) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignGenericBounces", $params);
+    }
+
+    /**
+	* Atrodam visus e-pastus, kas ir atrakstÄ«juÅ¡ies no Å¡Ä«s kampaÅ†as
+	*
+	* @example mgapi_campaignUnsubscribes.php
+	* @example xml-rpc_campaignUnsubscribes.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 1000. MaksimÄlÄ vÄ“rtÄ«ba ir 15000
+	* @return array Epastu saraksts
+	*/
     function campaignUnsubscribes($cid, $start = 0, $limit = 1000) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["start"] = $start;
-        $params["limit"] = $limit;
-        return $this->callServer("campaignUnsubscribes", $params);
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignUnsubscribes", $params);
     }
+	
+	/**
+	* AtgrieÅ¾ valstu sarakstu, no kurÄm ir atvÄ“rtas vÄ“stules un cik daudz
+	*
+	* @example mgapi_campaignGeoOpens.php
+	* @example xml-rpc_campaignGeoOpens.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @return array countries MasÄ«vs ar valstu sarakstu
+	* @returnf string code Valsts kods ISO3166 formÄtÄ, satur 2 simbolus
+	* @returnf string name Valsts nosaukums
+	* @returnf int opens Skaits, cik daudz atvÄ“rts
+	*/
+	function campaignGeoOpens($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("campaignGeoOpens", $params);
+	}
 
     /**
-     * Atgrieş valstu sarakstu, no kurâm ir atvçrtas vçstules un cik daudz
-     *
-     * @example mgapi_campaignGeoOpens.php
-     * @example xml-rpc_campaignGeoOpens.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @return array countries Masîvs ar valstu sarakstu
-     * @returnf string code Valsts kods ISO3166 formâtâ, satur 2 simbolus
-     * @returnf string name Valsts nosaukums
-     * @returnf int opens Skaits, cik daudz atvçrts
-     */
-    function campaignGeoOpens($cid) {
-        $params = array();
-        $params["cid"] = $cid;
-        return $this->callServer("campaignGeoOpens", $params);
-    }
-
-    /**
-     * Atrodam pârsûtîğanas statistiku
-     *
-     * @example mgapi_campaignForwardStats.php
-     * @example xml-rpc_campaignForwardStats.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @param integer $start Nav obligâts. Lapa, no kuras izvadît datus. Pçc noklusçjuma ir 0, kas atbilst pirmajai lapai
-     * @param integer $limit Nav obligâts. Rezultâtu skaits lapâ. Pçc noklusçjuma 1000. Maksimâlâ vçrtîba ir 15000
-     * @return array Epastu saraksts
-     */
+	* Atrodam pÄrsÅ«tÄ«Å¡anas statistiku
+	*
+	* @example mgapi_campaignForwardStats.php
+	* @example xml-rpc_campaignForwardStats.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 1000. MaksimÄlÄ vÄ“rtÄ«ba ir 15000
+	* @return array Epastu saraksts
+	*/
     function campaignForwardStats($cid, $start = 0, $limit = 1000) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["start"] = $start;
-        $params["limit"] = $limit;
-        return $this->callServer("campaignForwardStats", $params);
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignForwardStats", $params);
     }
+	
+	/**
+	* AtgrieÅ¾ kampaÅ†as atmesto vÄ“stuÄ¼u tekstus, kuras nav vecÄkas par 30 dienÄm
+	*
+	* @example mgapi_campaignBounceMessages.php
+	* @example xml-rpc_campaignBounceMessages.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 25. MaksimÄlÄ vÄ“rtÄ«ba ir 50
+	* @return array bounces MasÄ«vs, kas satur atsviesto epastu saturu
+	* @returnf string date Laiks, kad vÄ“stule saÅ†emta
+	* @returnf string email Epasta arese, uz kuru neizdevÄs nosÅ«tÄ«t
+	* @returnf string message AtsviestÄ“s vÄ“stules saturs
+	*/
+	function campaignBounceMessages($cid, $start = 0, $limit = 25) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignBounceMessages", $params);
+	}
+	
+	/**
+	* AtgrieÅ¾ epastu sarakstu, kas atvÄ“ruÅ¡i kampaÅ†u
+	*
+	* @example mgapi_campaignOpened.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 25. MaksimÄlÄ vÄ“rtÄ«ba ir 50
+	* @return struct MasÄ«vs, kas satur datus
+	* @returnf integer total KopÄ“jais skaits
+	* @returnf array data Saraksts ar datiem
+			struct data
+				string email Epasta adrese
+				integer count Cik reizes atvÄ“ra
+	*/
+	function campaignOpened($cid, $start = 0, $limit = 25) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignOpened", $params);
+	}
+	
+	/**
+	* AtgrieÅ¾ epastu sarakstu, kas nav atvÄ“ruÅ¡i kampaÅ†u
+	*
+	* @example mgapi_campaignNotOpened.php
+	*
+	* @param string $cid KampaÅ†as id. To var atrast ar campaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 25. MaksimÄlÄ vÄ“rtÄ«ba ir 50
+	* @return struct MasÄ«vs, kas satur datus
+	* @returnf integer total KopÄ“jais skaits
+	* @returnf array data Epastu saraksts
+			string email Epasta adrese
+	*/
+	function campaignNotOpened($cid, $start = 0, $limit = 25) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("campaignNotOpened", $params);
+	}
+	
+	/**
+	* Izveidojam jaunu sarakstu
+	*
+	* @example mgapi_listCreate.php
+	* @example xml-rpc_listCreate.php
+	*
+	* @param string $title Saraksta nosaukums
+	* @param array $options MasÄ«vs ar kampaÅ†as parametriem
+			string permission_reminder AtgÄdinÄjums lietotÄjiem, kÄ tie nokÄ¼uva sarakstÄ
+			string notify_to Epasta adrese, uz kuru sÅ«tÄ«t paziÅ†ojumus
+			bool subscription_notify SÅ«tÄ«t paziÅ†ojumus par to, ka ir jauns lietotÄjs pierakstÄ«jies
+			bool unsubscription_notify SÅ«tÄ«t paziÅ†ojumus par to, ka ir jauns lietotÄjs atrakstÄ«jies
+			bool has_email_type_option Ä»aut izvÄ“lÄ“ties epasta formÄtu
+	
+	*
+	* @return string AtgrieÅ¾ jaunÄ saraksta ID
+	*/
+	function listCreate($title, $options = NULL) {
+		$params = array();
+		$params["title"] = $title;
+		$params["options"] = $options;
+		return $this->callServer("listCreate", $params);
+	}
+	
+	/**
+	* Atjaunojam saraksta parametrus
+	*
+	* @example mgapi_listUpdate.php
+	* @example xml-rpc_listUpdate.php
+	*
+	* @param string $id Saraksta, kuru vajag labot, ID
+	* @param string $name Parametra nosaukums (skatÄ«ties pie listCreate() options lauku ). IespÄ“jamie parametri: title, permission_reminder, notify_to, utt.
+	* @return boolean true, ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function listUpdate($id, $name, $value) {
+		$params = array();
+		$params["id"] = $id;
+		$params["name"] = $name;
+		$params["value"] = $value;
+		return $this->callServer("listUpdate", $params);
+	}
+	
+	/**
+	* Tiek dzÄ“sts neatgriezensiki saraksts. Esiet uzmanÄ«gi!
+	*
+	* @example mgapi_listDelete.php
+	* @example xml-rpc_listDelete.php
+	*
+	* @param string $id Saraksta, kuru vajag labot, ID
+	* @return boolean true ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function listDelete($id) {
+		$params = array();
+		$params["id"] = $id;
+		return $this->callServer("listDelete", $params);
+	}
+
+	/**
+	* Atrodam visus sarakstus
+	*
+	* @example mgapi_lists.php
+	* @example xml-rpc_lists.php
+	*
+	* @return array MasÄ«vs ar sarakstiem
+	* @returnf string id Saraksta id. Å Ä« vÄ“rtÄ«ba tiek izmantota cÄ«tÄs funkcijÄs, kas strÄdÄ ar sarakstiem.
+	* @returnf integer web_id Saraksta id, kas tiek izmantots web administrÄcijas lapÄ
+	* @returnf string name Saraksta nosaukums
+	* @returnf date date_created Saraksta izveidoÅ¡anas datums.
+	* @returnf integer member_count LietotÄju skaits sarakstÄ
+	* @returnf integer unsubscribe_count LietotÄju skaits, cik atrakstÄ«juÅ¡ies no saraksta
+	* @returnf string default_from_name NoklusÄ“juma vÄ“rtÄ«ba From Name priekÅ¡ kampaÅ†Äm, kas izmanto Å¡o sarakstu
+	* @returnf string default_from_email NoklusÄ“juma vÄ“rtÄ«ba From Email priekÅ¡ kampaÅ†Äm, kas izmanto Å¡o sarakstu
+	* @returnf string default_subject NoklusÄ“juma vÄ“rtÄ«ba Subject priekÅ¡ kampaÅ†Äm, kas izmanto Å¡o sarakstu
+	* @returnf string default_language NoklusÄ“ja valoda saraksta formÄm
+	*/
+	function lists($start = 0, $limit = 1000) {
+		$params = array();
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("lists", $params);
+	}
+	
+	/**
+	* Atrodam merge tagus sarakstam
+	*
+	* @example mgapi_listMergeVarUpdate.php
+	* @example xml-rpc_listMergeVars.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @return array Merge tagu saraksts
+	* @returnf string name Merge taga nosaukums
+	* @returnf bool req Vai Å¡is lauks ir obligÄti aizpildÄms (true) vai nÄ“ (false)
+	* @returnf string field_type Merge tada datu tips. Ir pieÄ¼aujamas Å¡Ädas vÄ“rtÄ«bas: email, text, number, date, address, phone, website, image
+	* @returnf bool show NorÄda, vai rÄdÄ«t Å¡o lauku lietotÄju sarakstÄ.
+	* @returnf string order KÄrtas numurs
+	* @returnf string default VÄ“rtÄ«ba pÄ“c noklusÄ“juma
+	* @returnf string tag Merge tags, kas tiek izmantots formÄs, listSubscribe() un listUpdateMember()
+	*/
+	function listMergeVars($id) {
+		$params = array();
+		$params["id"] = $id;
+		return $this->callServer("listMergeVars", $params);
+	}
+	
+	/**
+	* Pievienojam jaunu merge tagu sarakstam
+	*
+	* @example mgapi_listMergeVarUpdate.php
+	* @example xml-rpc_listMergeVarAdd.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $tag Merge tags, kuru vajag pievienot, piemÄ“ram, FNAME
+	* @param string $name GarÄks nosaukum, kas tiks rÄdÄ«ts lietotÄjiem
+	* @param array $options Nav obligÄts. DaÅ¾Ädi parametri merge tagam.
+			string field_type Nav obligÄts. KÄda vÄ“rtÄ«ba no: text, number, date, address, phone, website, image. PÄ“c noklusÄ“juma ir text
+			boolean req Nav obligÄts. NorÄda, vai lauks ir obligÄti aizpildÄms. PÄ“c noklusÄ“juma, false
+			boolean show Nav obligÄts. NorÄda, vai rÄdÄ«t Å¡o lauku lietotÄju sarakstÄ. PÄ“c noklusÄ“juma, true
+			string default_value Nav obligÄts. VÄ“rtÄ«ba pÄ“c noklusÄ“juma
+	
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listMergeVarAdd($id, $tag, $name, $options = array()) {
+		$params = array();
+		$params["id"] = $id;
+		$params["tag"] = $tag;
+		$params["name"] = $name;
+		$params["options"] = $options;
+		return $this->callServer("listMergeVarAdd", $params);
+	}
+	
+	/**
+	* Atjaunojam merge taga parametrus sarakstÄ. Merge taga tipu nevar nomainÄ«t
+	*
+	* @example mgapi_listMergeVarUpdate.php
+	* @example xml-rpc_listMergeVarUpdate.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $tag Merge tags, kuru vajag atjaunot
+	* @param array $options Parametri merge taga atjaunoÅ¡anai. Pareizus parametrus skatÄ«ties pie metodes listMergeVarAdd()
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listMergeVarUpdate($id, $tag, $options) {
+		$params = array();
+		$params["id"] = $id;
+		$params["tag"] = $tag;
+		$params["options"] = $options;
+		return $this->callServer("listMergeVarUpdate", $params);
+	}
+
+	/**
+	* Tiek izdzÄ“sts merge tags no saraksta un vÄ“rtÄ«ba visiem saraksta lietotÄjiem. Dati tie izdzÄ“sti neatgriezeniski
+	*
+	* @example mgapi_listMergeVarDel.php
+	* @example xml-rpc_listMergeVarDel.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $tag Merge tags, kuru vajag izdzÄ“st
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listMergeVarDel($id, $tag) {
+		$params = array();
+		$params["id"] = $id;
+		$params["tag"] = $tag;
+		return $this->callServer("listMergeVarDel", $params);
+	}
 
     /**
-     * Atgrieş kampaòas atmesto vçstuïu tekstus, kuras nav vecâkas par 30 dienâm
-     *
-     * @example mgapi_campaignBounceMessages.php
-     * @example xml-rpc_campaignBounceMessages.php
-     *
-     * @param string $cid Kampaòas id. To var atrast ar campaigns()
-     * @param integer $start Nav obligâts. Lapa, no kuras izvadît datus. Pçc noklusçjuma ir 0, kas atbilst pirmajai lapai
-     * @param integer $limit Nav obligâts. Rezultâtu skaits lapâ. Pçc noklusçjuma 25. Maksimâlâ vçrtîba ir 50
-     * @return array bounces Masîvs, kas satur atsviesto epastu saturu
-     * @returnf string date Laiks, kad vçstule saòemta
-     * @returnf string email Epasta arese, uz kuru neizdevâs nosûtît
-     * @returnf string message Atsviestçs vçstules saturs
-     */
-    function campaignBounceMessages($cid, $start = 0, $limit = 25) {
-        $params = array();
-        $params["cid"] = $cid;
-        $params["start"] = $start;
-        $params["limit"] = $limit;
-        return $this->callServer("campaignBounceMessages", $params);
-    }
+	* Pievienojam sarakstam jaunu lietotaju
+	*
+	* @example mgapi_listSubscribe.php
+	* @example xml-rpc_listSubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $email_address Epasta adrese, ko japievieno sarakstam
+	* @param array $merge_vars Masivs, kas satur MERGE lauku vertibas (FNAME, LNAME, etc.) Maksimalais izmers 255
+	* @param string $email_type Nav obligats. Epasta tips: html vai plain. Pec noklusejuma html
+	* @param boolean $double_optin Vai sutit apstiprinajuma vestuli. Pec noklusejuma true
+	* @param boolean $update_existing Vai atjaunot eksistejoÂšos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
+	* @param boolean $send_welcome - Nav obligats. Sutit vai nesutit paldies vestuli. Pec noklusejuma false
+	
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listSubscribe($id, $email_address, $merge_vars, $email_type = 'html', $double_optin = true, $update_existing = false, $send_welcome = false) {
+		$params = array();
+		$params["id"] = $id;
+		$params["email_address"] = $email_address;
+		$params["merge_vars"] = $merge_vars;
+		$params["email_type"] = $email_type;
+		$params["double_optin"] = $double_optin;
+		$params["update_existing"] = $update_existing;
+		$params["send_welcome"] = $send_welcome;
+		return $this->callServer("listSubscribe", $params);
+	}
 
     /**
-     * Izveidojam jaunu sarakstu
-     *
-     * @example mgapi_listCreate.php
-     * @example xml-rpc_listCreate.php
-     *
-     * @param string $title Saraksta nosaukums
-     * @param array $options Masîvs ar kampaòas parametriem
-      string permission_reminder Atgâdinâjums lietotâjiem, kâ tie nokïuva sarakstâ
-      string notify_to Epasta adrese, uz kuru sûtît paziòojumus
-      bool subscription_notify Sûtît paziòojumus par to, ka ir jauns lietotâjs pierakstîjies
-      bool unsubscription_notify Sûtît paziòojumus par to, ka ir jauns lietotâjs atrakstîjies
-      bool has_email_type_option Ä»aut izvçlçties epasta formâtu
+	* Pievienojam sarakstam jaunu lietotaju
+	*
+	* @example mgapi_listSubscribe.php
+	* @example xml-rpc_listSubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $phone TÄlrunis, ko japievieno sarakstam
+	* @param array $merge_vars Masivs, kas satur MERGE lauku vertibas (FNAME, LNAME, etc.) Maksimalais izmers 255
+	* @param boolean $update_existing Vai atjaunot eksistejoÂšos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
+	
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listSubscribeSMS($id, $phone, $merge_vars, $update_existing = false) {
+		$params = array();
+		$params["id"] = $id;
+		$params["phone"] = $phone;
+		$params["merge_vars"] = $merge_vars;
+		$params["update_existing"] = $update_existing;
+		return $this->callServer("listSubscribeSMS", $params);
+	}
+	
+	/**
+	* Iznemam no saraksta epasta adresi
+	*
+	* @example mgapi_listUnsubscribe.php
+	* @example xml-rpc_listUnsubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $email_address Epasta adrese vai "id", ko var atrast ar "listMemberInfo" metodi
+	* @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
+	* @param boolean $send_goodbye Nosutit vai nesutit pazinojumu epasta lietotajam. Pec noklusejuma true
+	* @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listUnsubscribe($id, $email_address, $delete_member = false, $send_goodbye = true, $send_notify = true) {
+		$params = array();
+		$params["id"] = $id;
+		$params["email_address"] = $email_address;
+		$params["delete_member"] = $delete_member;
+		$params["send_goodbye"] = $send_goodbye;
+		$params["send_notify"] = $send_notify;
+		return $this->callServer("listUnsubscribe", $params);
+	}
+	
+	/**
+	* Iznemam no saraksta epasta adresi
+	*
+	* @example mgapi_listUnsubscribe.php
+	* @example xml-rpc_listUnsubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $phone Phone vai "id", ko var atrast ar "listMemberInfo" metodi
+	* @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
+	* @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listUnsubscribeSMS($id, $phone, $delete_member = false, $send_notify = true) {
+		$params = array();
+		$params["id"] = $id;
+		$params["phone"] = $phone;
+		$params["delete_member"] = $delete_member;
+		$params["send_notify"] = $send_notify;
+		return $this->callServer("listUnsubscribeSMS", $params);
+	}
 
-     *
-     * @return string Atgrieş jaunâ saraksta ID
-     */
-    function listCreate($title, $options = NULL) {
-        $params = array();
-        $params["title"] = $title;
-        $params["options"] = $options;
-        return $this->callServer("listCreate", $params);
-    }
+	/**
+	* Labo epasta adresi, MERGE laukus saraksta lietotajam
+	*
+	* @example mgapi_listUpdateMember.php
+	* @example xml-rpc_listUpdateMember.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $email_address Epasta adrese vai "id", ko var atrast ar "listMemberInfo" metodi
+	* @param array $merge_vars Masivs ar  MERGE laukiem. MERGE laukus var apskatities pie metodes "listSubscribe"
+	* @param string $email_type Epasta tips: "html" vai "plain". Nav obligats
+	* @return boolean true ja ir izdevies, false ja nav izdevies
+	*/
+	function listUpdateMember($id, $email_address, $merge_vars, $email_type = '') {
+		$params = array();
+		$params["id"] = $id;
+		$params["email_address"] = $email_address;
+		$params["merge_vars"] = $merge_vars;
+		$params["email_type"] = $email_type;
+		return $this->callServer("listUpdateMember", $params);
+	}
 
-    /**
-     * Atjaunojam saraksta parametrus
-     *
-     * @example mgapi_listUpdate.php
-     * @example xml-rpc_listUpdate.php
-     *
-     * @param string $id Saraksta, kuru vajag labot, ID
-     * @param string $name Parametra nosaukums (skatîties pie listCreate() options lauku ). Iespçjamie parametri: title, permission_reminder, notify_to, utt.
-     * @return boolean true, ja ir veiksmîgi, pretçjâ gadîjumâ atgrieş kïûdas paziòojumu
-     */
-    function listUpdate($id, $name, $value) {
-        $params = array();
-        $params["id"] = $id;
-        $params["name"] = $name;
-        $params["value"] = $value;
-        return $this->callServer("listUpdate", $params);
-    }
+	/**
+	* Pievienojam sarakstam vairakus epastus
+	*
+	* @example mgapi_listBatchSubscribe.php
+	* @example xml-rpc_listBatchSubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param array $batch Masivs, kas satur epastu datus. Epasta dati ir masivs ar Âšada atslegam: "EMAIL" epasta adresei, "EMAIL_TYPE" epasta tips (html vai plain) 
+	* @param boolean $double_optin Vai sutit apstiprinajuma vestuli. Pec noklusejuma true
+	* @param boolean $update_existing Vai atjaunot eksistejoÂšos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
+	* @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
+	* @returnf integer success_count Skaits, cik izdevas
+	* @returnf integer error_count Skaits, cik neizdevas
+	* @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "email"
+	*/
+	function listBatchSubscribe($id, $batch, $double_optin = true, $update_existing = false) {
+		$params = array();
+		$params["id"] = $id;
+		$params["batch"] = $batch;
+		$params["double_optin"] = $double_optin;
+		$params["update_existing"] = $update_existing;
+		return $this->callServer("listBatchSubscribe", $params);
+	}
 
-    /**
-     * Atrodam visus sarakstus
-     *
-     * @example mgapi_lists.php
-     * @example xml-rpc_lists.php
-     *
-     * @return array Masîvs ar sarakstiem
-     * @returnf string id Saraksta id. Ğî vçrtîba tiek izmantota cîtâs funkcijâs, kas strâdâ ar sarakstiem.
-     * @returnf integer web_id Saraksta id, kas tiek izmantots web administrâcijas lapâ
-     * @returnf string name Saraksta nosaukums
-     * @returnf date date_created Saraksta izveidoğanas datums.
-     * @returnf integer member_count Lietotâju skaits sarakstâ
-     * @returnf integer unsubscribe_count Lietotâju skaits, cik atrakstîjuğies no saraksta
-     * @returnf string default_from_name Noklusçjuma vçrtîba From Name priekğ kampaòâm, kas izmanto ğo sarakstu
-     * @returnf string default_from_email Noklusçjuma vçrtîba From Email priekğ kampaòâm, kas izmanto ğo sarakstu
-     * @returnf string default_subject Noklusçjuma vçrtîba Subject priekğ kampaòâm, kas izmanto ğo sarakstu
-     * @returnf string default_language Noklusçja valoda saraksta formâm
-     */
-    function lists() {
-        $params = array();
-        return $this->callServer("lists", $params);
-    }
+	/**
+	* Pievienojam sarakstam vairakus epastus
+	*
+	* @example mgapi_listBatchSubscribe.php
+	* @example xml-rpc_listBatchSubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param array $batch Masivs, kas satur epastu datus. Epasta dati ir masivs ar Âšada atslegam: "SMS" epasta adresei
+	* @param boolean $update_existing Vai atjaunot eksistejoÂšos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
+	* @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
+	* @returnf integer success_count Skaits, cik izdevas
+	* @returnf integer error_count Skaits, cik neizdevas
+	* @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "phone"
+	*/
+	function listBatchSubscribeSMS($id, $batch, $update_existing = false) {
+		$params = array();
+		$params["id"] = $id;
+		$params["batch"] = $batch;
+		$params["double_optin"] = $double_optin;
+		$params["update_existing"] = $update_existing;
+		return $this->callServer("listBatchSubscribeSMS", $params);
+	}
+	
+	/**
+	* Iznemam no saraksta vairakus epastus
+	*
+	* @example mgapi_listBatchUnsubscribe.php
+	* @example xml-rpc_listBatchUnsubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param array $emails Epastu masivs
+	* @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
+	* @param boolean $send_goodbye Nosutit vai nesutit pazinojumu epasta lietotajam. Pec noklusejuma true
+	* @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
+	* @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
+	* @returnf integer success_count Skaits, cik izdevas
+	* @returnf integer error_count Skaits, cik neizdevas
+	* @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "email"
+	*/
+	function listBatchUnsubscribe($id, $emails, $delete_member = false, $send_goodbye = true, $send_notify = false) {
+		$params = array();
+		$params["id"] = $id;
+		$params["emails"] = $emails;
+		$params["delete_member"] = $delete_member;
+		$params["send_goodbye"] = $send_goodbye;
+		$params["send_notify"] = $send_notify;
+		return $this->callServer("listBatchUnsubscribe", $params);
+	}
+	
+	/**
+	* Iznemam no saraksta vairakus epastus
+	*
+	* @example mgapi_listBatchUnsubscribe.php
+	* @example xml-rpc_listBatchUnsubscribe.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param array $phones TÄlruÅ†u masivs
+	* @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
+	* @param boolean $send_goodbye Nosutit vai nesutit pazinojumu epasta lietotajam. Pec noklusejuma true
+	* @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
+	* @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
+	* @returnf integer success_count Skaits, cik izdevas
+	* @returnf integer error_count Skaits, cik neizdevas
+	* @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "email"
+	*/
+	function listBatchUnsubscribeSMS($id, $phones, $delete_member = false, $send_notify = false) {
+		$params = array();
+		$params["id"] = $id;
+		$params["phones"] = $phones;
+		$params["delete_member"] = $delete_member;
+		$params["send_notify"] = $send_notify;
+		return $this->callServer("listBatchUnsubscribeSMS", $params);
+	}
+	
+	/**
+	* Atrodam epasta info sarkaksta
+	*
+	* @example mgapi_listMembers.php
+	* @example xml-rpc_listMembers.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $status Epasta statuss (subscribed, unsubscribed, inactive, bounced), pec noklusejuma subscribed
+	* @param integer $start Nav obligats. NepiecieÂšams lielam sarakstam. Lapas numurs, no kuras sakt. Pirmajai lapai atbilst numurs 0
+	* @param integer $limit Nav obligats. NepiecieÂšams lielam sarakstam. Skaits, cik daudz atgriezt epastus. Pec noklusejuma 100, maksimalais ir 15000
+	* @return array Masivs ar lietotaju sarakstu
+	* @returnf string email Lietotaja epasts
+	* @returnf date timestamp PeivienoÂšanas datums
+	*/
+	function listMembers($id, $status = 'subscribed', $start = 0, $limit = 100) {
+		$params = array();
+		$params["id"] = $id;
+		$params["status"] = $status;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("listMembers", $params);
+	}
+	
+	/**
+	* Atrodam epasta info sarkaksta
+	*
+	* @example mgapi_listMemberInfo.php
+	* @example xml-rpc_listMemberInfo.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @param string $email_address Epasta adrese vai epasta ID saraksta
+	* @return array Masivs, kas satur epasta informaciju
+	* @returnf string id Unikals epasta id
+	* @returnf string email Epasta adrese
+	* @returnf string email_type Epasta tips: html vai plain
+	* @returnf array merges Masivs ar papildus laukiem
+	* @returnf string status Epasta status: inactive, subscribed, unsubscribed, bounced
+	* @returnf string ip_opt IP adrese, no kuras tika apstiprinats epasts
+	* @returnf string ip_signup IP adrese, no kuras tika aizpildita forma
+	* @returnf date timestamp Laiks, kad tika pievienots sarakstam
+	*/
+	function listMemberInfo($id, $email_address) {
+		$params = array();
+		$params["id"] = $id;
+		$params["email_address"] = $email_address;
+		return $this->callServer("listMemberInfo", $params);
+	}
+	
+	/**
+	* Saraksta pieauguma informacija pa meneÂšiem
+	*
+	* @example mgapi_listGrowthHistory.php
+	* @example xml-rpc_listGrowthHistory.php
+	*
+	* @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
+	* @return array Masivs pa meneÂšiem
+	* @returnf string month Gads un menesis YYYY-MM formata
+	* @returnf integer existing Skaits, cik bija lietotaju meneÂša sakuma
+	* @returnf integer imports Skaits, cik daudz tekoÂšaja menesi tika pievienoti lietotaji
+	*/
+	function listGrowthHistory($id) {
+		$params = array();
+		$params["id"] = $id;
+		return $this->callServer("listGrowthHistory", $params);
+	}
 
-    /**
-     * Atrodam merge tagus sarakstam
-     *
-     * @example mgapi_listMergeVarUpdate.php
-     * @example xml-rpc_listMergeVars.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @return array Merge tagu saraksts
-     * @returnf string name Merge taga nosaukums
-     * @returnf bool req Vai ğis lauks ir obligâti aizpildâms (true) vai nç (false)
-     * @returnf string field_type Merge tada datu tips. Ir pieïaujamas ğâdas vçrtîbas: email, text, number, date, address, phone, website, image
-     * @returnf bool show Norâda, vai râdît ğo lauku lietotâju sarakstâ.
-     * @returnf string order Kârtas numurs
-     * @returnf string default Vçrtîba pçc noklusçjuma
-     * @returnf string tag Merge tags, kas tiek izmantots formâs, listSubscribe() un listUpdateMember()
-     */
-    function listMergeVars($id) {
-        $params = array();
-        $params["id"] = $id;
-        return $this->callServer("listMergeVars", $params);
-    }
+	/**
+	* Atrodam visus saraksta segmentus
+	*
+	* @example mgapi_listSegments.php
+	* @example xml-rpc_listSegments.php
+	*
+	* @return array MasÄ«vs ar saraksta segmentiem
+	* @returnf string id Saraksta segmenta id.
+	* @returnf integer web_id Saraksta segmenta id, kas tiek izmantots web administrÄcijas lapÄ
+	* @returnf string name Saraksta segmenta nosaukums
+	* @returnf date date_created Saraksta izveidoÅ¡anas datums.
+	* @returnf integer member_count LietotÄju skaits sarakstÄ
+	*/
+	function listSegments($id) {
+		$params = array();
+		$params["id"] = $id;
+		return $this->callServer("listSegments", $params);
+	}
 
-    /**
-     * Pievienojam jaunu merge tagu sarakstam
-     *
-     * @example mgapi_listMergeVarUpdate.php
-     * @example xml-rpc_listMergeVarAdd.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $tag Merge tags, kuru vajag pievienot, piemçram, FNAME
-     * @param string $name Garâks nosaukum, kas tiks râdîts lietotâjiem
-     * @param array $options Nav obligâts. Daşâdi parametri merge tagam.
-      string field_type Nav obligâts. Kâda vçrtîba no: text, number, date, address, phone, website, image. Pçc noklusçjuma ir text
-      boolean req Nav obligâts. Norâda, vai lauks ir obligâti aizpildâms. Pçc noklusçjuma, false
-      boolean show Nav obligâts. Norâda, vai râdît ğo lauku lietotâju sarakstâ. Pçc noklusçjuma, true
-      string default_value Nav obligâts. Vçrtîba pçc noklusçjuma
+	/**
+	* Izveidojam jaunu segmentu
+	*
+	* @example mgapi_listSegmentCreate.php
+	*
+	* @param string $list Saraksta ID
+	* @param string $title Segmenta nosaukums
+	* @param string $match SakritÄ«bas tips
+	* @param array $filter MasÄ«vs ar nosacÄ«jumu masÄ«viem
+			string field Merge lauks
+			string condition NosacÄ«jumi: is, not, isany, contains, notcontain, starts, ends, greater, less
+			string value VÄ“rtÄ«ba, priekÅ¡ condition
+	
+	*
+	* @return string AtgrieÅ¾ jaunÄ segmenta ID
+	*/
+	function listSegmentCreate($list, $title, $match, $filter) {
+		$params = array();
+		$params["list"] = $list;
+		$params["title"] = $title;
+		$params["match"] = $match;
+		$params["filter"] = $filter;
+		return $this->callServer("listSegmentCreate", $params);
+	}
+	
+	/**
+	* Atjaunojam segmenta parametrus
+	*
+	* @example mgapi_listSegmentUpdate.php
+	*
+	* @param string $sid Segmenta, kuru vajag labot, ID
+	* @param string $name Parametra nosaukums (skatÄ«ties pie listSegmentCreate() options lauku ). IespÄ“jamie parametri: title, match, filter
+	* @return boolean true, ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function listSegmentUpdate($sid, $name, $value) {
+		$params = array();
+		$params["sid"] = $sid;
+		$params["name"] = $name;
+		$params["value"] = $value;
+		return $this->callServer("listSegmentUpdate", $params);
+	}
+	
+	/**
+	* Tiek dzÄ“sts neatgriezensiki segments. Esiet uzmanÄ«gi!
+	*
+	* @example mgapi_listSegmentDelete.php
+	*
+	* @param string $sid Segmenta, kuru vajag dzÄ“st, ID
+	* @return boolean true ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function listSegmentDelete($sid) {
+		$params = array();
+		$params["sid"] = $sid;
+		return $this->callServer("listSegmentDelete", $params);
+	}
+	
+	/**
+	* NoÅ†emam nost statusu, kas lika SMS kampaÅ†u izsÅ«tÄ«t kaut kad nÄkotnÄ“
+	*
+	* @example mgapi_smsCampaignUnschedule.php
+	*
+	* @param string $cid SMS kampaÅ†a, kurai vajag noÅ†emt izsÅ«tÄ«Å¡anas laiku kaut kad nÄkotnÄ“, ID
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function smsCampaignUnschedule($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("smsCampaignUnschedule", $params);
+	}
+	
+	/**
+	* IestÄdam laiku, kad izsÅ«tÄ«t SMS kampaÅ†u
+	*
+	* @example mgapi_smsCampaignSchedule.php
+	*
+	* @param string $cid SMS kampaÅ†a, kurai vajag iestÄdÄ«t izsÅ«tÄ«Å¡anas laiku, ID
+	* @param string $schedule_time Laiks, kad izsÅ«tÄ«t. Laiku jÄnorÄda Å¡ÄdÄ formÄtÄ YYYY-MM-DD HH:II:SS pÄ“c <strong>GMT</strong>
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function smsCampaignSchedule($cid, $schedule_time) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["schedule_time"] = $schedule_time;
+		return $this->callServer("smsCampaignSchedule", $params);
+	}
+	
+	/**
+	* NosÅ«tÄ«t SMS kampaÅ†u nekavÄ“joties
+	*
+	* @example mgapi_smsCampaignSendNow.php
+	*
+	* @param string $cid SMS kampaÅ†a, kuru vajag nosÅ«tÄ«t, ID
+	* @return boolean true ja ir veiksmÄ«gi
+	*/
+	function smsCampaignSendNow($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("smsCampaignSendNow", $params);
+	}
+	
+	/**
+	* Atrodam visus lietotÄja SMS Å¡ablonus
+	*
+	* @example mgapi_smsCampaignTemplates.php
+	*
+	* @return array MasÄ«vs, kas satur SMS Å¡ablonus
+	* @returnf integer id Å ablona ID
+	* @returnf string source Å ablona teksts
+	*/
+	function smsCampaignTemplates() {
+		$params = array();
+		return $this->callServer("smsCampaignTemplates", $params);
+	}
+	
+	/**
+	* Izveidojam jaunu SMS kampaÅ†u
+	*
+	* @example mgapi_smsCampaignCreate.php
+	*
+	* @param array $options MasÄ«vs ar SMS kampaÅ†as parametriem
+			string sender VÄrds, no kÄ tiks nosÅ«tÄ«ta SMS. To nepiecieÅ¡ams piereÄ£istrÄ“t ar funkciju smsSenderIdRegister()
+			struct recipients
+				string list_id Saraksta id, to var atrast ar lists()
+				integer segment_id Nav obligÄts. Segmenta ID, to var atrast ar segments()
+				string merge SMS lauka nosaukums, piemÄ“ram, MERGE10, SMS
+			array tracking Nav obligÄts. Statistikas parametru masÄ«vs, tiek izmantotas Å¡Ädas atslÄ“gas: "clicks".
+			string title Nav obligÄts. KampaÅ†as nosaukums.
+			array analytics Nav obligÄts. MasÄ«vs ar skaitÄ«tÄju informÄciju. Google gadÄ«jumÄ ir Å¡Äds pielietojums "google"=>"jÅ«su_google_analytics_atslÄ“ga". "jÅ«su_google_analytics_atslÄ“ga" tiks pievienota visiem linkiem, statistiku varÄ“s apskatÄ«ties klienta Google Analytics kontÄ
+			boolean unicode Nav obligÄts. Nosaka, vai izsÅ«tÄ«t kampaÅ†u unikodÄ. Lai speciÄlie simboli un burit rÄdÄ«tos SMS kampaÅ†a, Å¡im ir jÄbÅ«t true. PÄ“c noklusÄ“juma ir false
+			boolean concatenate Nav obligÄts. Nosaka, vai izsÅ«tÄ«t vairÄkas Ä«sziÅ†as, ja teksts ir par garu. PÄ“c noklusÄ“juma ir false
+	
+	* @param array $content MasÄ«vs, kas satur vÄ“stules saturu. StruktÅ«ra:
+			text saturs Nav obligÄts, ja ir norÄdÄ«ts template_id. SMS kampaÅ†as saturs
+			integer template_id Nav obligÄts. LietotÄja SMS Å¡ablona id, nu kura tiks paÅ†emts SMS saturs. Var atrast ar smsCampaignTemplates()
+	
+	*
+	* @return string AtgrieÅ¾ jaunÄs SMS kampaÅ†as ID
+	*/
+	function smsCampaignCreate($options, $content) {
+		$params = array();
+		$params["options"] = $options;
+		$params["content"] = $content;
+		return $this->callServer("smsCampaignCreate", $params);
+	}
+	
+	/**
+	* Atjaunojam kampaÅ†as, kura vÄ“l nav nosÅ«tÄ«ta, parametrus
+	*   
+	*  
+	*  UzmanÄ«bu:<br/><ul>
+	*        <li>Ja JÅ«s izmantojat list_id, visi iepriekÅ¡Ä“jie saraksti tiks izdzÄ“sti.</li>
+	*        <li>Ja JÅ«s izmantojat template_id, tiks pÄrrakstÄ«ts saturs ar Å¡ablona saturu</li>
+	*
+	* @example mgapi_smsCampaignUpdate.php
+	*
+	* @param string $cid KampaÅ†as, kuru vajag labot, ID
+	* @param string $name Parametra nosaukums (skatÄ«ties pie smsCampaignCreate() options lauku ). IespÄ“jamie parametri: sender, recipients, utt. Papildus parametri ir content.
+	* @param mixed  $value IespÄ“jamÄs vÄ“rtÄ«bas parametram ( skatÄ«ties campaignCreate() options lauku )
+	* @return boolean true, ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function smsCampaignUpdate($cid, $name, $value) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["name"] = $name;
+		$params["value"] = $value;
+		return $this->callServer("smsCampaignUpdate", $params);
+	}
+	
+	/**
+	* KopÄ“jam kampaÅ†u
+	*
+	* @example mgapi_smsCampaignReplicate.php
+	*
+	* @param string $cid SMS kampaÅ†a, kuru vajag kopÄ“t, ID
+	* @return string AtgrieÅ¾am jaunÄs SMS kampaÅ†as ID
+	*/
+	function smsCampaignReplicate($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("smsCampaignReplicate", $params);
+	}
+	
+	/**
+	* Tiek dzÄ“sta neatgriezensiki SMS kampaÅ†a. Esiet uzmanÄ«gi!
+	*
+	* @example mgapi_smsCampaignDelete.php
+	*
+	* @param string $cid SMS kampaÅ†a, kuru vajag dzÄ“st, ID
+	* @return boolean true ja ir veiksmÄ«gi, pretÄ“jÄ gadÄ«jumÄ atgrieÅ¾ kÄ¼Å«das paziÅ†ojumu
+	*/
+	function smsCampaignDelete($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("smsCampaignDelete", $params);
+	}
+	
+	/**
+	* AtgrieÅ¾am SMS kampaÅ†u sarakstu. Var pielietot filtru, lai detalizÄ“t atlasÄ«tu
+	*
+	* @example mgapi_smsCampaigns.php
+	*
+	* @param array $filters Nav obligÄts. MasÄ«vs ar parametriem:
+			string  campaign_id Nav obligÄts, kampaÅ†as id
+			string  recipients Nav obligÄts, saraksta id. To var atrast ar lists()
+			string  status Nav obligÄts. Var atrast kampaÅ†u pÄ“c statusa: sent, draft, sending
+			string  sender Nav obligÄts. Atlasa kampÄnu pÄ“c sÅ«tÄ«tÄja vÄrda
+			string  title Nav obligÄts. Atlasa pÄ“c kampaÅ†as nosaukuma
+			string  sendtime_start Nav obligÄts. Atlasa vÄ“stules, kas izsÅ«tÄ«tas pÄ“c Å¡Ä« datuma/laika. FormÄts - YYYY-MM-DD HH:mm:ss (24hr)
+			string  sendtime_end Nav obligÄts. Atlasa vÄ“stules, kas izsÅ«tÄ«tas pirms Å¡Ä« datuma/laika. FormÄts - YYYY-MM-DD HH:mm:ss (24hr)
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 25. MaksimÄlÄ vÄ“rtÄ«ba ir 1000
+	* @return array AgrieÅ¾ masÄ«vu ar SMS kampaÅ†u sarakstu
+	* @returnf string id SMS kampaÅ†as id. To izmanto pÄrÄ“jÄm funkcijÄm
+	* @returnf integer web_id SMS kampaÅ†as id, kas tiek izmanots web versijÄ
+	* @returnf string title SMS kampaÅ†as virsraksts
+	* @returnf date create_time SMS kampaÅ†as izveidoÅ¡anas datums
+	* @returnf date send_time SMS kampÄnas nosÅ«tÄ«Å¡anas datums
+	* @returnf integer sms_sent NosÅ«tÄ«to SMS skaits
+	* @returnf string status KampaÅ†as statuss (sent, draft, paused, sending)
+	* @returnf string sender SMS sÅ«tÄ«tÄja vÄrds
+	* @returnf boolean analytics IntegrÄ“t vai neitegrÄ“t Google Analytics
+	* @returnf string analytcs_tag  Google Analytics nosaukums kampaÅ†ai
+	* @returnf boolean track_clicks SkaitÄ«t vai neskaitÄ«t klikÅ¡Ä·us
+	* @returnf boolean unicode Izmantot vai neizmantot unikodu
+	* @returnf boolean concatenate SadalÄ«t vai nesadalÄ«t vairÄkÄs Ä«sziÅ†Äs garÄku Ä«sziÅ†u
+	*/
+	function smsCampaigns($filters = array(), $start = 0, $limit = 25) {
+		$params = array();
+		$params["filters"] = $filters;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("smsCampaigns", $params);
+	}
+	
+	/**
+	* AtgrieÅ¾ SMS kampaÅ†as statistiku
+	*
+	* @example mgapi_smsCampaignStats.php
+	*
+	* @param string $cid SMS kampaÅ†as id. To var atrast ar smsCampaigns()
+	* @return array MasÄ«vs, kas satur SMS kampaÅ†as statistiku
+	* @returnf integer delivered PiegÄdÄto SMS skaits
+	* @returnf integer sent NosÅ«tÄ«to SMS skaits. VÄ“l nav saÅ†emts gala apstiprinÄjums par veiksmi vai neveiksmi
+	* @returnf integer queued SMS skats, kas stÄv vÄ“l izsÅ«tÄ«Å¡anas rindÄ
+	* @returnf integer undelivered NepiegÄdÄto SMS skaits
+	* @returnf integer error NepiegÄdÄto SMS skaits, kuriem ir bijusi kÄda tehniska kÄ¼Å«da piegÄdes procesÄ
+	* @returnf integer other SMS ar citu piegÄdes statusu
+	* @returnf integer clicks Skaits, cik daudz ir spiests uz linkiem
+	* @returnf integer unique_clicks UnikÄlie klikÅ¡Ä·i uz saitÄ“m
+	* @returnf date last_click Datums, kad pÄ“dÄ“jo reizi spiests uz linkiem
+	* @returnf integer users_who_clicked LietotÄju skaits, kas spieduÅ¡i uz saitÄ“m
+	* @returnf integer sms_sent KopÄ“jais skaits, cik vÄ“stules ir izsÅ«tÄ«tas
+	*/
+	function smsCampaignStats($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("smsCampaignStats", $params);
+	}
+	
+	/**
+	* Atrodam SMS kampaÅ†as visus linkus
+	*
+	* @example mgapi_smsCampaignClickStats.php
+	*
+	* @param string $cid SMS kampaÅ†as id. To var atrast ar smsCampaigns()
+	* @return struct urls SaiÅ¡u masÄ«vs, kur atslÄ“ga ir saite
+	* @returnf integer clicks KopÄ“jais klikÅ¡Ä·u skaits
+	* @returnf integer unique UnikÄlo klikÅ¡Ä·u skaits
+	*/
+	function smsCampaignClickStats($cid) {
+		$params = array();
+		$params["cid"] = $cid;
+		return $this->callServer("smsCampaignClickStats", $params);
+	}
+	
+	/**
+	* AtgrieÅ¾ SMS kampaÅ†as nepiegÄdÄto Ä«sziÅ†u statusus
+	*
+	* @example mgapi_smsCampaignBounces.php
+	*
+	* @param string $cid SMS kampaÅ†as id. To var atrast ar smsCampaigns()
+	* @param integer $start Nav obligÄts. Lapa, no kuras izvadÄ«t datus. PÄ“c noklusÄ“juma ir 0, kas atbilst pirmajai lapai
+	* @param integer $limit Nav obligÄts. RezultÄtu skaits lapÄ. PÄ“c noklusÄ“juma 25. MaksimÄlÄ vÄ“rtÄ«ba ir 50
+	* @return array bounces MasÄ«vs, kas satur nepiegÄdÄtÄs SMS
+	* @returnf string phone TÄlruÅ†a numurs, uz kuru neizdevÄs nosÅ«tÄ«t
+	* @returnf string reason Iemesls, kÄpÄ“c netika piegÄdÄts
+	*/
+	function smsCampaignBounces($cid, $start = 0, $limit = 25) {
+		$params = array();
+		$params["cid"] = $cid;
+		$params["start"] = $start;
+		$params["limit"] = $limit;
+		return $this->callServer("smsCampaignBounces", $params);
+	}
+	
+	/**
+	* NosÅ«tam pieprasÄ«jumu reÄ£istrÄ“t SMS sÅ«tÄ«tÄja vÄrdu
+	*
+	* @example mgapi_smsSenderIdRegister.php
+	*
+	* @param string $sender VÄ“lamais SMS sÅ«tÄ«tÄja vÄrds
+	* @param string $phone Rezerves mobilÄ tÄlr. numurs
+	* @param string $company UzÅ†Ä“muma nosaukums
+	* @param string $fullname Kontaktpersonas vÄrds, uzvÄrds
+	* @param string $companyposition PozÄ«cija uzÅ†Ä“mumÄ
+	* @param string $comments Papildus komentÄri
+	* @returnf boolean Vai ir pieÅ†emts izskatÄ«Å¡anai
+	*/
+	function smsSenderIdRegister($sender, $phone, $company, $fullname, $companyposition, $comments = '') {
+		$params = array();
+		$params["sender"] = $sender;
+		$params["phone"] = $phone;
+		$params["company"] = $company;
+		$params["fullname"] = $fullname;
+		$params["companyposition"] = $companyposition;
+		$params["comments"] = $comments;
+		return $this->callServer("smsSenderIdRegister", $params);
+	}
+	
+	/**
+	* AtgrieÅ¾ daÅ¾Ädu informaciju par lietotaju kontu
+	*
+	* @example mgapi_getAccountDetails.php
+	* @example xml-rpc_getAccountDetails.php
+	*
+	* @return array Masivs, kas satur daË›adu informaciju par Âšis API atlsegas lietotaja kontu
+	* @returnf string user_id Lietotaja unikalais ID, tas tiek izmantots buvejot daË›adas saites
+	* @returnf string username Lietotaja lietotajvards
+	* @returnf bool is_trial Vai lietotajs ir trial
+	* @returnf int emails_left Skaits, cik daudz epastus var nosutit
+	* @returnf datetime first_payment Pirma maksajuma datums
+	* @returnf datetime last_payment Pedeja maksajuma datums
+	* @returnf int times_logged_in Skaits, cik daudz reizes lietotajs caur web ir ielogojies
+	* @returnf datetime last_login Datums, kad pedejo reizi bija ielogojies caur web
+	* @returnf array contact Masivs, kas satur kontkatinformaciju: Vards, uzvards, epasts, uznemuma nosaukums, adrese, majas lapas adrese, telefons, fakss
+	* @returnf array orders Masivs, kas satur informaciju par samaksatajiem rekiniem: rekina numurs, plans, cena, valuta, izrakstiÂšanas datums, pakas deriguma terminÂš
+	*/
+	function getAccountDetails() {
+		$params = array();
+		return $this->callServer("getAccountDetails", $params);
+	}
+	
+	/**
+	* Atrodam visu sarakstu ID, kuros ir ÂšÅ¡is epasts
+	*
+	* @example mgapi_listsForEmail.php
+	* @example xml-rpc_listsForEmail.php
+	*
+	* @param string $email_address epasta adrese
+	* @return array an array Masivs, kas satur sarakstu ID
+	*/
+	function listsForEmail($email_address) {
+		$params = array();
+		$params["email_address"] = $email_address;
+		return $this->callServer("listsForEmail", $params);
+	}
+	
+	/**
+	* Atrodam visas API atslegas
+	*
+	* @example mgapi_apikeys.php
+	* @example xml-rpc_apikeys.php
+	*
+	* @param string $username lietotaja vards
+	* @param string $password lietotaja parole
+	* @param boolean $expired nav obligats - radit vai neradit atslegas, kuras vairs nav derigas. Pec noklusejuma ir false
+	* @return array API atslegu masivs, kas satur:
+	* @returnf string apikey ÂŠo atslegu var izmantot, lai pieslegtos API
+	* @returnf string created_at Datums, kad atslega ir izveidota
+	* @returnf string expired_at Datums, kad ta tika atzimeta, ka neaktiva
+	*/
+	function apikeys($username, $password, $expired = false) {
+		$params = array();
+		$params["username"] = $username;
+		$params["password"] = $password;
+		$params["expired"] = $expired;
+		return $this->callServer("apikeys", $params);
+	}
+	
+	/**
+	* Izveidojam jaunu API atslegu
+	*
+	* @example mgapi_apikeyAdd.php
+	* @example xml-rpc_apikeyAdd.php
+	*
+	* @param string $username lietotaja vards
+	* @param string $password lietotaja parole
+	* @return string atgrieË› jaunu API atslegu
+	*/
+	function apikeyAdd($username, $password) {
+		$params = array();
+		$params["username"] = $username;
+		$params["password"] = $password;
+		return $this->callServer("apikeyAdd", $params);
+	}
+	
+	/**
+	* Atzimejam ka neaktivu API atslegu
+	*
+	* @example mgapi_apikeyExpire.php
+	* @example xml-rpc_apikeyExpire.php
+	*
+	* @param string $username lietotaja vards
+	* @param string $password lietotaja parole
+	* @return boolean true, ja izdevas nomainit statusu
+	*/
+	function apikeyExpire($username, $password) {
+		$params = array();
+		$params["username"] = $username;
+		$params["password"] = $password;
+		return $this->callServer("apikeyExpire", $params);
+	}
+	
+	/**
+	* Atrodam API atslegu
+	*
+	* @example mgapi_login.php
+	* @example xml-rpc_login.php
+	*
+	* @param string $username lietotaja vards
+	* @param string $password lietotaja parole
+	* @return string tiek atgriezta API atslega, ja tadas vel nav, tad tiek izveidota
+	*/
+	function login($username, $password) {
+		$params = array();
+		$params["username"] = $username;
+		$params["password"] = $password;
+		return $this->callServer("login", $params);
+	}
+	
+	/**
+	* "ping" - vienkarÂš veids, ka parbaudit, vai viss ir kartiba. Ja ir kadas problemas, tiks atgriezts par to pazinojums.
+	*
+	* @example mgapi_ping.php
+	* @example xml-rpc_ping.php
+	*
+	* @return string tiek atgriezts teksts "Everything's Ok!", ja viss ir kartiba, ja nav, tad atgrieË› kludas pazinojumu
+	*/
+	function ping() {
+		$params = array();
+		return $this->callServer("ping", $params);
+	}
+	
+	/**
+	* Piesledzas pie servera uz izsauc nepiecieÂšamo metodi un atgrieË› rezultatu
+	* ÂŠo funkciju nav nepiecieÂšams izsaukt manuali
+	*/
+	function callServer($method, $params) {
+		$host = $this->apiUrl["host"];
+		$params["apikey"] = $this->api_key;
+		
+		$this->errorMessage = "";
+		$this->errorCode = "";
+		$post_vars = $this->httpBuildQuery($params);
+                
+//                $msg = $host.$this->apiUrl["path"] . "?" . $this->apiUrl["query"] . "&method=" . $method."\n";
+//                $msg .= $post_vars;
+//                throw new Exception($msg);
 
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listMergeVarAdd($id, $tag, $name, $options = array()) {
-        $params = array();
-        $params["id"] = $id;
-        $params["tag"] = $tag;
-        $params["name"] = $name;
-        $params["options"] = $options;
-        return $this->callServer("listMergeVarAdd", $params);
-    }
 
-    /**
-     * Atjaunojam merge taga parametrus sarakstâ. Merge taga tipu nevar nomainît
-     *
-     * @example mgapi_listMergeVarUpdate.php
-     * @example xml-rpc_listMergeVarUpdate.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $tag Merge tags, kuru vajag atjaunot
-     * @param array $options Parametri merge taga atjaunoğanai. Pareizus parametrus skatîties pie metodes listMergeVarAdd()
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listMergeVarUpdate($id, $tag, $options) {
-        $params = array();
-        $params["id"] = $id;
-        $params["tag"] = $tag;
-        $params["options"] = $options;
-        return $this->callServer("listMergeVarUpdate", $params);
-    }
-
-    /**
-     * Tiek izdzçsts merge tags no saraksta un vçrtîba visiem saraksta lietotâjiem. Dati tie izdzçsti neatgriezeniski
-     *
-     * @example mgapi_listMergeVarDel.php
-     * @example xml-rpc_listMergeVarDel.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $tag Merge tags, kuru vajag izdzçst
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listMergeVarDel($id, $tag) {
-        $params = array();
-        $params["id"] = $id;
-        $params["tag"] = $tag;
-        return $this->callServer("listMergeVarDel", $params);
-    }
-
-    /**
-     * Pievienojam sarakstam jaunu lietotaju
-     *
-     * @example mgapi_listSubscribe.php
-     * @example xml-rpc_listSubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $email_address Epasta adrese, ko japievieno sarakstam
-     * @param array $merge_vars Masivs, kas satur MERGE lauku vertibas (FNAME, LNAME, etc.) Maksimalais izmers 255
-     * @param string $email_type Nav obligats. Epasta tips: html vai plain. Pec noklusejuma html
-     * @param boolean $double_optin Vai sutit apstiprinajuma vestuli. Pec noklusejuma true
-     * @param boolean $update_existing Vai atjaunot eksistejoğos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
-     * @param boolean $send_welcome - Nav obligats. Sutit vai nesutit paldies vestuli. Pec noklusejuma false
-
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listSubscribe($id, $email_address, $merge_vars, $email_type = 'html', $double_optin = true, $update_existing = false, $send_welcome = false) {
-        $params = array();
-        $params["id"] = $id;
-        $params["email_address"] = $email_address;
-        $params["merge_vars"] = $merge_vars;
-        $params["email_type"] = $email_type;
-        $params["double_optin"] = $double_optin;
-        $params["update_existing"] = $update_existing;
-        $params["send_welcome"] = $send_welcome;
-        return $this->callServer("listSubscribe", $params);
-    }
-
-    /**
-     * Pievienojam sarakstam jaunu lietotaju
-     *
-     * @example mgapi_listSubscribe.php
-     * @example xml-rpc_listSubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $phone Tâlrunis, ko japievieno sarakstam
-     * @param array $merge_vars Masivs, kas satur MERGE lauku vertibas (FNAME, LNAME, etc.) Maksimalais izmers 255
-     * @param boolean $update_existing Vai atjaunot eksistejoğos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
-
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listSubscribeSMS($id, $phone, $merge_vars, $update_existing = false) {
-        $params = array();
-        $params["id"] = $id;
-        $params["phone"] = $phone;
-        $params["merge_vars"] = $merge_vars;
-        $params["update_existing"] = $update_existing;
-        return $this->callServer("listSubscribeSMS", $params);
-    }
-
-    /**
-     * Iznemam no saraksta epasta adresi
-     *
-     * @example mgapi_listUnsubscribe.php
-     * @example xml-rpc_listUnsubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $email_address Epasta adrese vai "id", ko var atrast ar "listMemberInfo" metodi
-     * @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
-     * @param boolean $send_goodbye Nosutit vai nesutit pazinojumu epasta lietotajam. Pec noklusejuma true
-     * @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listUnsubscribe($id, $email_address, $delete_member = false, $send_goodbye = true, $send_notify = true) {
-        $params = array();
-        $params["id"] = $id;
-        $params["email_address"] = $email_address;
-        $params["delete_member"] = $delete_member;
-        $params["send_goodbye"] = $send_goodbye;
-        $params["send_notify"] = $send_notify;
-        return $this->callServer("listUnsubscribe", $params);
-    }
-
-    /**
-     * Iznemam no saraksta epasta adresi
-     *
-     * @example mgapi_listUnsubscribe.php
-     * @example xml-rpc_listUnsubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $phone Phone vai "id", ko var atrast ar "listMemberInfo" metodi
-     * @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
-     * @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listUnsubscribeSMS($id, $phone, $delete_member = false, $send_notify = true) {
-        $params = array();
-        $params["id"] = $id;
-        $params["phone"] = $phone;
-        $params["delete_member"] = $delete_member;
-        $params["send_notify"] = $send_notify;
-        return $this->callServer("listUnsubscribeSMS", $params);
-    }
-
-    /**
-     * Labo epasta adresi, MERGE laukus saraksta lietotajam
-     *
-     * @example mgapi_listUpdateMember.php
-     * @example xml-rpc_listUpdateMember.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $email_address Epasta adrese vai "id", ko var atrast ar "listMemberInfo" metodi
-     * @param array $merge_vars Masivs ar  MERGE laukiem. MERGE laukus var apskatities pie metodes "listSubscribe"
-     * @param string $email_type Epasta tips: "html" vai "plain". Nav obligats
-     * @return boolean true ja ir izdevies, false ja nav izdevies
-     */
-    function listUpdateMember($id, $email_address, $merge_vars, $email_type = '') {
-        $params = array();
-        $params["id"] = $id;
-        $params["email_address"] = $email_address;
-        $params["merge_vars"] = $merge_vars;
-        $params["email_type"] = $email_type;
-        return $this->callServer("listUpdateMember", $params);
-    }
-
-    /**
-     * Pievienojam sarakstam vairakus epastus
-     *
-     * @example mgapi_listBatchSubscribe.php
-     * @example xml-rpc_listBatchSubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param array $batch Masivs, kas satur epastu datus. Epasta dati ir masivs ar ğada atslegam: "EMAIL" epasta adresei, "EMAIL_TYPE" epasta tips (html vai plain) 
-     * @param boolean $double_optin Vai sutit apstiprinajuma vestuli. Pec noklusejuma true
-     * @param boolean $update_existing Vai atjaunot eksistejoğos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
-     * @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
-     * @returnf integer success_count Skaits, cik izdevas
-     * @returnf integer error_count Skaits, cik neizdevas
-     * @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "email"
-     */
-    function listBatchSubscribe($id, $batch, $double_optin = true, $update_existing = false) {
-        $params = array();
-        $params["id"] = $id;
-        $params["batch"] = $batch;
-        $params["double_optin"] = $double_optin;
-        $params["update_existing"] = $update_existing;
-        return $this->callServer("listBatchSubscribe", $params);
-    }
-
-    /**
-     * Pievienojam sarakstam vairakus epastus
-     *
-     * @example mgapi_listBatchSubscribe.php
-     * @example xml-rpc_listBatchSubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param array $batch Masivs, kas satur epastu datus. Epasta dati ir masivs ar ğada atslegam: "SMS" epasta adresei
-     * @param boolean $update_existing Vai atjaunot eksistejoğos epastus. Pec noklusejuma false (atgriezis kludas pazinojumu)
-     * @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
-     * @returnf integer success_count Skaits, cik izdevas
-     * @returnf integer error_count Skaits, cik neizdevas
-     * @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "phone"
-     */
-    function listBatchSubscribeSMS($id, $batch, $update_existing = false) {
-        $params = array();
-        $params["id"] = $id;
-        $params["batch"] = $batch;
-        $params["double_optin"] = $double_optin;
-        $params["update_existing"] = $update_existing;
-        return $this->callServer("listBatchSubscribeSMS", $params);
-    }
-
-    /**
-     * Iznemam no saraksta vairakus epastus
-     *
-     * @example mgapi_listBatchUnsubscribe.php
-     * @example xml-rpc_listBatchUnsubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param array $emails Epastu masivs
-     * @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
-     * @param boolean $send_goodbye Nosutit vai nesutit pazinojumu epasta lietotajam. Pec noklusejuma true
-     * @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
-     * @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
-     * @returnf integer success_count Skaits, cik izdevas
-     * @returnf integer error_count Skaits, cik neizdevas
-     * @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "email"
-     */
-    function listBatchUnsubscribe($id, $emails, $delete_member = false, $send_goodbye = true, $send_notify = false) {
-        $params = array();
-        $params["id"] = $id;
-        $params["emails"] = $emails;
-        $params["delete_member"] = $delete_member;
-        $params["send_goodbye"] = $send_goodbye;
-        $params["send_notify"] = $send_notify;
-        return $this->callServer("listBatchUnsubscribe", $params);
-    }
-
-    /**
-     * Iznemam no saraksta vairakus epastus
-     *
-     * @example mgapi_listBatchUnsubscribe.php
-     * @example xml-rpc_listBatchUnsubscribe.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param array $phones Tâlruòu masivs
-     * @param boolean $delete_member Dzest vai nedzest lietotaju no saraksta. Pec noklusejuma false
-     * @param boolean $send_goodbye Nosutit vai nesutit pazinojumu epasta lietotajam. Pec noklusejuma true
-     * @param boolean $send_notify Nosutit vai nesutit pazinojumu uz epastu, kas noradits saraksta opcijas. Pec noklusejuma false
-     * @return struct Masivs, kas satur skaitu, cik izevies iznemt un kludu pazinojumus
-     * @returnf integer success_count Skaits, cik izdevas
-     * @returnf integer error_count Skaits, cik neizdevas
-     * @returnf array errors Masivs ar kludas pazinojumiem. Satur "code", "message", un "email"
-     */
-    function listBatchUnsubscribeSMS($id, $phones, $delete_member = false, $send_notify = false) {
-        $params = array();
-        $params["id"] = $id;
-        $params["phones"] = $phones;
-        $params["delete_member"] = $delete_member;
-        $params["send_notify"] = $send_notify;
-        return $this->callServer("listBatchUnsubscribeSMS", $params);
-    }
-
-    /**
-     * Atrodam epasta info sarkaksta
-     *
-     * @example mgapi_listMembers.php
-     * @example xml-rpc_listMembers.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $status Epasta statuss (subscribed, unsubscribed, inactive, bounced), pec noklusejuma subscribed
-     * @param integer $start Nav obligats. Nepiecieğams lielam sarakstam. Lapas numurs, no kuras sakt. Pirmajai lapai atbilst numurs 0
-     * @param integer $limit Nav obligats. Nepiecieğams lielam sarakstam. Skaits, cik daudz atgriezt epastus. Pec noklusejuma 100, maksimalais ir 15000
-     * @return array Masivs ar lietotaju sarakstu
-     * @returnf string email Lietotaja epasts
-     * @returnf date timestamp Peivienoğanas datums
-     */
-    function listMembers($id, $status = 'subscribed', $start = 0, $limit = 100) {
-        $params = array();
-        $params["id"] = $id;
-        $params["status"] = $status;
-        $params["start"] = $start;
-        $params["limit"] = $limit;
-        return $this->callServer("listMembers", $params);
-    }
-
-    /**
-     * Atrodam epasta info sarkaksta
-     *
-     * @example mgapi_listMemberInfo.php
-     * @example xml-rpc_listMemberInfo.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @param string $email_address Epasta adrese vai epasta ID saraksta
-     * @return array Masivs, kas satur epasta informaciju
-     * @returnf string id Unikals epasta id
-     * @returnf string email Epasta adrese
-     * @returnf string email_type Epasta tips: html vai plain
-     * @returnf array merges Masivs ar papildus laukiem
-     * @returnf string status Epasta status: inactive, subscribed, unsubscribed, bounced
-     * @returnf string ip_opt IP adrese, no kuras tika apstiprinats epasts
-     * @returnf string ip_signup IP adrese, no kuras tika aizpildita forma
-     * @returnf date timestamp Laiks, kad tika pievienots sarakstam
-     */
-    function listMemberInfo($id, $email_address) {
-        $params = array();
-        $params["id"] = $id;
-        $params["email_address"] = $email_address;
-        return $this->callServer("listMemberInfo", $params);
-    }
-
-    /**
-     * Saraksta pieauguma informacija pa meneğiem
-     *
-     * @example mgapi_listGrowthHistory.php
-     * @example xml-rpc_listGrowthHistory.php
-     *
-     * @param string $id Saraksta ID. Saraksta ID var atrast ar lists() metodi
-     * @return array Masivs pa meneğiem
-     * @returnf string month Gads un menesis YYYY-MM formata
-     * @returnf integer existing Skaits, cik bija lietotaju meneğa sakuma
-     * @returnf integer imports Skaits, cik daudz tekoğaja menesi tika pievienoti lietotaji
-     */
-    function listGrowthHistory($id) {
-        $params = array();
-        $params["id"] = $id;
-        return $this->callServer("listGrowthHistory", $params);
-    }
-
-    /**
-     * Atrodam visus saraksta segmentus
-     *
-     * @example mgapi_listSegments.php
-     * @example xml-rpc_listSegments.php
-     *
-     * @return array Masîvs ar saraksta segmentiem
-     * @returnf string id Saraksta segmenta id.
-     * @returnf integer web_id Saraksta segmenta id, kas tiek izmantots web administrâcijas lapâ
-     * @returnf string name Saraksta segmenta nosaukums
-     * @returnf date date_created Saraksta izveidoğanas datums.
-     * @returnf integer member_count Lietotâju skaits sarakstâ
-     */
-    function listSegments($id) {
-        $params = array();
-        $params["id"] = $id;
-        return $this->callServer("listSegments", $params);
-    }
-
-    /**
-     * Atgrieş daşadu informaciju par lietotaju kontu
-     *
-     * @example mgapi_getAccountDetails.php
-     * @example xml-rpc_getAccountDetails.php
-     *
-     * @return array Masivs, kas satur daşadu informaciju par ğis API atlsegas lietotaja kontu
-     * @returnf string user_id Lietotaja unikalais ID, tas tiek izmantots buvejot daşadas saites
-     * @returnf string username Lietotaja lietotajvards
-     * @returnf bool is_trial Vai lietotajs ir trial
-     * @returnf int emails_left Skaits, cik daudz epastus var nosutit
-     * @returnf datetime first_payment Pirma maksajuma datums
-     * @returnf datetime last_payment Pedeja maksajuma datums
-     * @returnf int times_logged_in Skaits, cik daudz reizes lietotajs caur web ir ielogojies
-     * @returnf datetime last_login Datums, kad pedejo reizi bija ielogojies caur web
-     * @returnf array contact Masivs, kas satur kontkatinformaciju: Vards, uzvards, epasts, uznemuma nosaukums, adrese, majas lapas adrese, telefons, fakss
-     * @returnf array orders Masivs, kas satur informaciju par samaksatajiem rekiniem: rekina numurs, plans, cena, valuta, izrakstiğanas datums, pakas deriguma terminğ
-     */
-    function getAccountDetails() {
-        $params = array();
-        return $this->callServer("getAccountDetails", $params);
-    }
-
-    /**
-     * Atrodam visu sarakstu ID, kuros ir ğis epasts
-     *
-     * @example mgapi_listsForEmail.php
-     * @example xml-rpc_listsForEmail.php
-     *
-     * @param string $email_address epasta adrese
-     * @return array an array Masivs, kas satur sarakstu ID
-     */
-    function listsForEmail($email_address) {
-        $params = array();
-        $params["email_address"] = $email_address;
-        return $this->callServer("listsForEmail", $params);
-    }
-
-    /**
-     * Atrodam visas API atslegas
-     *
-     * @example mgapi_apikeys.php
-     * @example xml-rpc_apikeys.php
-     *
-     * @param string $username lietotaja vards
-     * @param string $password lietotaja parole
-     * @param boolean $expired nav obligats - radit vai neradit atslegas, kuras vairs nav derigas. Pec noklusejuma ir false
-     * @return array API atslegu masivs, kas satur:
-     * @returnf string apikey ğo atslegu var izmantot, lai pieslegtos API
-     * @returnf string created_at Datums, kad atslega ir izveidota
-     * @returnf string expired_at Datums, kad ta tika atzimeta, ka neaktiva
-     */
-    function apikeys($username, $password, $expired = false) {
-        $params = array();
-        $params["username"] = $username;
-        $params["password"] = $password;
-        $params["expired"] = $expired;
-        return $this->callServer("apikeys", $params);
-    }
-
-    /**
-     * Izveidojam jaunu API atslegu
-     *
-     * @example mgapi_apikeyAdd.php
-     * @example xml-rpc_apikeyAdd.php
-     *
-     * @param string $username lietotaja vards
-     * @param string $password lietotaja parole
-     * @return string atgrieş jaunu API atslegu
-     */
-    function apikeyAdd($username, $password) {
-        $params = array();
-        $params["username"] = $username;
-        $params["password"] = $password;
-        return $this->callServer("apikeyAdd", $params);
-    }
-
-    /**
-     * Atzimejam ka neaktivu API atslegu
-     *
-     * @example mgapi_apikeyExpire.php
-     * @example xml-rpc_apikeyExpire.php
-     *
-     * @param string $username lietotaja vards
-     * @param string $password lietotaja parole
-     * @return boolean true, ja izdevas nomainit statusu
-     */
-    function apikeyExpire($username, $password) {
-        $params = array();
-        $params["username"] = $username;
-        $params["password"] = $password;
-        return $this->callServer("apikeyExpire", $params);
-    }
-
-    /**
-     * Atrodam API atslegu
-     *
-     * @example mgapi_login.php
-     * @example xml-rpc_login.php
-     *
-     * @param string $username lietotaja vards
-     * @param string $password lietotaja parole
-     * @return string tiek atgriezta API atslega, ja tadas vel nav, tad tiek izveidota
-     */
-    function login($username, $password) {
-        $params = array();
-        $params["username"] = $username;
-        $params["password"] = $password;
-        return $this->callServer("login", $params);
-    }
-
-    /**
-     * "ping" - vienkarğ veids, ka parbaudit, vai viss ir kartiba. Ja ir kadas problemas, tiks atgriezts par to pazinojums.
-     *
-     * @example mgapi_ping.php
-     * @example xml-rpc_ping.php
-     *
-     * @return string tiek atgriezts teksts "Everything's Ok!", ja viss ir kartiba, ja nav, tad atgrieş kludas pazinojumu
-     */
-    function ping() {
-        $params = array();
-        return $this->callServer("ping", $params);
-    }
-
-    /**
-     * Piesledzas pie servera uz izsauc nepiecieğamo metodi un atgrieş rezultatu
-     * ğo funkciju nav nepiecieğams izsaukt manuali
-     */
-    function callServer($method, $params) {
-        $host = $this->apiUrl["host"];
-        $params["apikey"] = $this->api_key;
-
-        $this->errorMessage = "";
-        $this->errorCode = "";
-        $post_vars = $this->httpBuildQuery($params);
-
-        $payload = "POST " . $this->apiUrl["path"] . "?" . $this->apiUrl["query"] . "&method=" . $method . " HTTP/1.0\r\n";
-        $payload .= "Host: " . $host . "\r\n";
-        $payload .= "User-Agent: MGAPI/" . $this->version . "\r\n";
-        $payload .= "Content-type: application/x-www-form-urlencoded\r\n";
-        $payload .= "Content-length: " . strlen($post_vars) . "\r\n";
-        $payload .= "Connection: close \r\n\r\n";
-        $payload .= $post_vars;
-
-        ob_start();
-        if ($this->secure) {
-            $sock = fsockopen("ssl://" . $host, 443, $errno, $errstr, 30);
-        } else {
-            $sock = fsockopen($host, 80, $errno, $errstr, 30);
-        }
-        if (!$sock) {
-            $this->errorMessage = "Could not connect (ERR $errno: $errstr)";
-            $this->errorCode = "-99";
-            ob_end_clean();
-            return false;
-        }
-
-        $response = "";
-        fwrite($sock, $payload);
-        stream_set_timeout($sock, $this->timeout);
-        $info = stream_get_meta_data($sock);
-        while ((!feof($sock)) && (!$info["timed_out"])) {
-            $response .= fread($sock, $this->chunkSize);
-            $info = stream_get_meta_data($sock);
-        }
-        if ($info["timed_out"]) {
-            $this->errorMessage = "Could not read response (timed out)";
-            $this->errorCode = -98;
-        }
-        fclose($sock);
-        ob_end_clean();
-        if ($info["timed_out"])
-            return false;
-
-        list($throw, $response) = explode("\r\n\r\n", $response, 2);
-
-        if (ini_get("magic_quotes_runtime"))
-            $response = stripslashes($response);
-
-        $serial = unserialize($response);
-        if ($response && $serial === false) {
-            $response = array("error" => "Bad Response.  Got This: " . $response, "code" => "-99");
-        } else {
-            $response = $serial;
-        }
-        if (is_array($response) && isset($response["error"])) {
-            $this->errorMessage = $response["error"];
-            $this->errorCode = $response["code"];
-            return false;
-        }
-
-        return $response;
-    }
-
-    /**
-     * Definejam funkciju, kas aizstaj http_build_query sistemam, kuras tas nav
-     */
-    function httpBuildQuery($params, $key = NULL) {
-        if (!function_exists('http_build_query')) {
-            $ret = array();
-
-            foreach ((array) $params as $name => $val) {
-                $name = urlencode($name);
-                if ($key !== null) {
-                    $name = $key . "[" . $name . "]";
-                }
-
-                if (is_array($val) || is_object($val)) {
-                    $ret[] = $this->httpBuildQuery($val, $name);
-                } elseif ($val !== null) {
-                    $ret[] = $name . "=" . urlencode($val);
-                }
-            }
-
-            return implode("&", $ret);
-        } else {
-            return http_build_query((array) $params, $key);
-        }
-    }
-
+                $payload = "POST " . $this->apiUrl["path"] . "?" . $this->apiUrl["query"] . "&method=" . $method . " HTTP/1.0\r\n";
+		$payload .= "Host: " . $host . "\r\n";
+		$payload .= "User-Agent: MGAPI/" . $this->version ."\r\n";
+		$payload .= "Content-type: application/x-www-form-urlencoded\r\n";
+		$payload .= "Content-length: " . strlen($post_vars) . "\r\n";
+		$payload .= "Connection: close \r\n\r\n";
+		$payload .= $post_vars;
+		
+		ob_start();
+		if ($this->secure){
+			$sock = fsockopen("ssl://".$host, 443, $errno, $errstr, 30);
+		} else {
+			$sock = fsockopen($host, 80, $errno, $errstr, 30);
+		}
+		if(!$sock) {
+			$this->errorMessage = "Could not connect (ERR $errno: $errstr)";
+			$this->errorCode = "-99";
+			ob_end_clean();
+			return false;
+		}
+		
+		$response = "";
+		fwrite($sock, $payload);
+		stream_set_timeout($sock, $this->timeout);
+		$info = stream_get_meta_data($sock);
+		while ((!feof($sock)) && (!$info["timed_out"])) {
+			$response .= fread($sock, $this->chunkSize);
+			$info = stream_get_meta_data($sock);
+		}
+		if ($info["timed_out"]) {
+			$this->errorMessage = "Could not read response (timed out)";
+			$this->errorCode = -98;
+		}
+		fclose($sock);
+		ob_end_clean();
+		if ($info["timed_out"]) return false;
+		
+		list($throw, $response) = explode("\r\n\r\n", $response, 2);
+		
+		if(ini_get("magic_quotes_runtime")) $response = stripslashes($response);
+		
+		$serial = unserialize($response);
+		if($response && $serial === false) {
+			$response = array("error" => "Bad Response.  Got This: " . $response, "code" => "-99");
+		} else {
+			$response = $serial;
+		}
+		if(is_array($response) && isset($response["error"])) {
+			$this->errorMessage = $response["error"];
+			$this->errorCode = $response["code"];
+			return false;
+		}
+		
+		return $response;
+	}
+	
+	/**
+	* Definejam funkciju, kas aizstaj http_build_query sistemam, kuras tas nav
+	*/
+	function httpBuildQuery($params, $key = NULL) {
+		if(!function_exists('http_build_query')) {
+			$ret = array();
+			
+			foreach((array) $params as $name => $val) {
+				$name = urlencode($name);
+				if($key !== null) {
+					$name = $key . "[" . $name . "]";
+				}
+				
+				if(is_array($val) || is_object($val)) {
+						$ret[] = $this->httpBuildQuery($val, $name);
+				} elseif($val !== null) {
+					$ret[] = $name . "=" . urlencode($val);
+				}
+			}
+			
+			return implode("&", $ret);
+		} else {
+			return http_build_query((array)$params, $key);
+		}
+	}
 }
 
 ?>
