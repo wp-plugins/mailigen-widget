@@ -2,7 +2,7 @@
 Contributors: krisjanis@imedia.lv
 Tags: email marketing, mailigen, mailing list, newsletter, signup form, widget
 Requires at least: 3.0.1
-Tested up to: 4.1
+Tested up to: 4.2.1
 Stable tag: trunk
 
 Add a signup form to your sidebar for your Mailigen mailing list.
