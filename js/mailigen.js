@@ -30,16 +30,20 @@ $j(document).ready(function() {
      * MAILIGEN WIDGET
      * ---------------------
      */
-    var mg_widget_form = $j('.mg-widget-form');
-    error_box = $j(".mg-error-box", mg_widget_form);
-    error_box.hide();
+    var mg_widget_forms = $j('.mg-widget-form');
+    $j(".mg-error-box", mg_widget_forms).hide();
 
-    $j(mg_widget_form).submit(function() {
+    $j(mg_widget_forms).submit(function() {
+        var mg_widget_form = $j(this),
+            error_box = $j(".mg-error-box", mg_widget_form);
+            
+        error_box.hide();
+        
         var data = $j(this).serialize(),
-                $btn = $j('#mailigen-submit');
+                $btn = $j('.mailigen-submit', mg_widget_form);
 
         error_box.fadeOut();
-        $j('.mg-error').remove();
+        $j('.mg-error', mg_widget_form).remove();
         
         changeBtnState($btn, 'inactive');
 
@@ -56,7 +60,7 @@ $j(document).ready(function() {
                 }
                 if (response.message.content) {
                     try {
-                        $j(".MailigenWidget").html(response.message.content);
+                        mg_widget_form.closest(".MailigenWidget").html(response.message.content);
                     } catch (e) {
                     }
                 } else {
@@ -67,7 +71,7 @@ $j(document).ready(function() {
                 error_box.html('<p>' + response.message + '</p>').fadeIn();
                 if (response.errors) {
                     $j.each(response.errors, function(key, val) {
-                        $j('.' + key).before($j('<div class="mg-error">' + val + '</div>'));
+                        $j('.' + key, mg_widget_form).before($j('<div class="mg-error">' + val + '</div>'));
                     });
                 }
             }
