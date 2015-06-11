@@ -387,7 +387,7 @@ class Mailigen_Widget extends WP_Widget {
             $this->showField($field_vals);
         }
         echo "</dl>";
-        echo "<dd><button id='mailigen-submit' type='submit' name='mailigen_submit'>" . $button_name . "<span class='mg_waiting'></span></button></dd>";
+        echo "<dd><button type='submit' name='mailigen_submit' class='mailigen-submit'>" . $button_name . "<span class='mg_waiting'></span></button></dd>";
         echo "</form>";
         echo $after_widget;
     }
