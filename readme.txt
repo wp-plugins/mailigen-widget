@@ -2,7 +2,7 @@
 Contributors: krisjanis@imedia.lv
 Tags: email marketing, mailigen, mailing list, newsletter, signup form, widget
 Requires at least: 3.0.1
-Tested up to: 4.2.1
+Tested up to: 4.1
 Stable tag: trunk
 
 Add a signup form to your sidebar for your Mailigen mailing list.
@@ -52,6 +52,11 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 == Changelog ==
 
+= 1.2.1 =
+* Added new features (Thanks to Ted Barnett):
+ * multiple subscribe form widgets allowed on one page
+ * ability to hide field labels (adds labels inside text fields)
+
 = 1.2.0 =
 * Added new features (Thanks to Ted Barnett):
  * ability to collect checkbox, dropdown, and radio fields (user must replicate values on the plugin settings separated by a comma)
@@ -75,6 +80,11 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+* Added new features (Thanks to Ted Barnett):
+ * multiple subscribe form widgets allowed on one page
+ * ability to hide field labels (adds labels inside text fields)
 
 = 1.2.0 =
 * Added new features (Thanks to Ted Barnett):

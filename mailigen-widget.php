@@ -178,6 +178,7 @@ class Mailigen_Widget extends WP_Widget {
         $instance['double_optin'] = (isset($new_instance['double_optin']) ? true : false);
         $instance['update_existing'] = (isset($new_instance['update_existing']) ? true : false);
         $instance['send_welcome'] = (isset($new_instance['send_welcome']) ? true : false);
+        $instance['hide_labels'] = (isset($new_instance['hide_labels']) ? true : false);
         return $instance;
     }
 
@@ -199,6 +200,7 @@ class Mailigen_Widget extends WP_Widget {
             'double_optin' => true,
             'update_existing' => false,
             'send_welcome' => true,
+            'hide_labels' => false,
                 )
         );
         list( $id, $name, $value ) = array(
@@ -284,6 +286,16 @@ class Mailigen_Widget extends WP_Widget {
         echo "<p>";
         echo "<label for='{$id}'><input id='{$id}' name='{$name}' type='checkbox' value='true' class='' {$checked} /> Send Welcome Email</label>";
         echo "</p>";
+
+        list( $id, $name, $value ) = array(
+            $this->get_field_id('hide_labels'),
+            $this->get_field_name('hide_labels'),
+            esc_textarea($instance['hide_labels'])
+        );
+        $checked = ($value == true ? 'checked' : '');
+        echo "<p>";
+        echo "<label for='{$id}'><input id='{$id}' name='{$name}' type='checkbox' value='true' class='' {$checked} /> Hide Labels</label>";
+        echo "</p>";
     }
 
     /**
@@ -299,14 +311,18 @@ class Mailigen_Widget extends WP_Widget {
             // text, email
             case 'text':
             case 'email':
-                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                if(!$hide_labels){ 
+                echo "<dt><label for='{$name}' class='{$class}'>{$title}{$req}</label></dt>";
                 echo "<dd><input id='{$name}' type='text' name='{$name}' maxlength='100' class='{$class}' /></dd>";
+                } else {
+                echo "<dd><input id='{$name}' type='text' name='{$name}' maxlength='100' class='{$class}' placeholder='{$title}{$req}' /></dd>";
+                }
                 break;
 
 
             // dropdown box
             case 'dropdown':
-                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                if(!$hide_labels) echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
                 echo "<dd><select class='{$class}' name='{$name}'>";
                 foreach ($choices as $value => $title) {
                     $title = esc_html($title);
@@ -317,7 +333,7 @@ class Mailigen_Widget extends WP_Widget {
 
             // grouping box
             case 'grouping':
-                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                if(!$hide_labels) echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
                 foreach ($choices as $value => $title) {
                     $title = esc_html($title);
                     echo "<dd><input name='{$name}[]' value='{$title}' type='checkbox'> <small class='{$class}'>{$title}</small></dd>";
@@ -326,7 +342,7 @@ class Mailigen_Widget extends WP_Widget {
 
             // radio box
             case 'radio':
-                echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
+                if(!$hide_labels) echo "<dt><label for='{$name}' class='{$class}'>{$req}{$title}</label></dt>";
                 foreach ($choices as $value => $title) {
                     $title = esc_html($title);
                     echo "<dd><input name='{$name}' value='{$title}' type='radio'> <small class='{$class}'>{$title}</small></dd>";
@@ -345,6 +361,7 @@ class Mailigen_Widget extends WP_Widget {
         echo empty($instance['title']) ? ' ' : $before_title . apply_filters('widget_title', $instance['title']) . $after_title;
         $description_txt = empty($instance['desc']) ? __('Enter your email address below.') : apply_filters('widget_desc', $instance['desc']);
         $button_name = empty($instance['button_name']) ? __('Subscribe') : apply_filters('widget_button_name', $instance['button_name']);
+        $hide_labels = empty($instance['hide_labels']) ? false : $instance['hide_labels'];
 
         if (!$this->options['mg_fields']) {
             echo "Please set up your Mailigen plugin!";
@@ -352,7 +369,7 @@ class Mailigen_Widget extends WP_Widget {
         };
 
         echo "<p>" . $description_txt . "</p>";
-        echo "<form id='mg-widget-form' method='post' action=''>";
+        echo "<form id='mg-widget-form' class='mg-widget-form' method='post' action=''>";
         echo "<input type='hidden' name='action' value='mailigen_subscribe'>";
         echo '<div class="mg-error-box">&nbsp;</div>';
         echo "<dl class='mailigen-form'>";
@@ -364,7 +381,8 @@ class Mailigen_Widget extends WP_Widget {
                 'type' => $field[1],
                 'title' => $field[0],
                 'class' => $name,
-                'choices' => split(',', $field[3])
+                'choices' => split(',', $field[3]),
+                'hide_labels' => $hide_labels
             );
             $this->showField($field_vals);
         }
