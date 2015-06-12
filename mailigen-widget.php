@@ -97,16 +97,24 @@ class Mailigen_Widget extends WP_Widget {
                     $fields[$key] = esc_attr($value);
                 }
             }
+            
+            $widget_number = $this->getWidgetNumberFromPostData($fields);
+            
             $apiKey = $this->getOption('mg_apikey');
             $listId = $this->getOption('mg_fields_list');
             $errors = $this->validate($fields);
             $current_widget_options = get_option($this->option_name);
+            
+            if($widget_number < 0 || !isset($current_widget_options[$widget_number])){
+                $widget_number = $this->number;
+            }
+            
             $email_type = 'html';
-            $double_optin = $current_widget_options[$this->number]['double_optin'];
-            $update_existing = $current_widget_options[$this->number]['update_existing'];
-            $send_welcome = $current_widget_options[$this->number]['send_welcome'];
-            $success_msg = $current_widget_options[$this->number]['success_msg'];
-            $redirect_url = $current_widget_options[$this->number]['redirect_url'];
+            $double_optin = $current_widget_options[$widget_number]['double_optin'];
+            $update_existing = $current_widget_options[$widget_number]['update_existing'];
+            $send_welcome = $current_widget_options[$widget_number]['send_welcome'];
+            $success_msg = $current_widget_options[$widget_number]['success_msg'];
+            $redirect_url = $current_widget_options[$widget_number]['redirect_url'];
 
             if (count($errors) > 0) {
                 $response['message'] = 'Some fields require proper input!';
@@ -186,7 +194,6 @@ class Mailigen_Widget extends WP_Widget {
      * Show widget form in backend
      */
     function form($instance) {
-
         $instance = wp_parse_args(
                 (array) $instance, array(
             'title' => __('Signup For Our Mailing List'),
@@ -355,7 +362,6 @@ class Mailigen_Widget extends WP_Widget {
      * Show widget in frontend
      */
     function widget($args, $instance) {
-
         extract($args, EXTR_SKIP);
         echo $before_widget;
         echo empty($instance['title']) ? ' ' : $before_title . apply_filters('widget_title', $instance['title']) . $after_title;
@@ -371,6 +377,8 @@ class Mailigen_Widget extends WP_Widget {
         echo "<p>" . $description_txt . "</p>";
         echo "<form id='mg-widget-form' class='mg-widget-form' method='post' action=''>";
         echo "<input type='hidden' name='action' value='mailigen_subscribe'>";
+        echo "<input type='hidden' name='mailigen_widget_form_id' value='" . $this->id . "'>";
+        echo "<input type='hidden' name='mailigen_widget_form_number' value='" . $this->number . "'>";
         echo '<div class="mg-error-box">&nbsp;</div>';
         echo "<dl class='mailigen-form'>";
         foreach ($this->options['mg_fields'] as $name => $field) {
@@ -390,6 +398,18 @@ class Mailigen_Widget extends WP_Widget {
         echo "<dd><button type='submit' name='mailigen_submit' class='mailigen-submit'>" . $button_name . "<span class='mg_waiting'></span></button></dd>";
         echo "</form>";
         echo $after_widget;
+    }
+    
+    /**
+     *  Get widget number from post data
+     */
+    function getWidgetNumberFromPostData($fields = array()) {
+        
+        if(isset($fields['mailigen_widget_form_number'])){
+            return intval($fields['mailigen_widget_form_number']);
+        }else{
+            return -1;
+        }
     }
 
 }
@@ -915,7 +935,7 @@ class Mailigen_Options {
         );
         wp_redirect($goback);
     }
-
+    
 }
 
 if (is_admin())
