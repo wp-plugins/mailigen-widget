@@ -5,19 +5,27 @@ Requires at least: 3.0.1
 Tested up to: 4.1
 Stable tag: trunk
 
-Add a signup form to your sidebar for your Mailigen mailing list.
+Add beautiful sign-up forms with ease to your site. Create a custom design and place it on your site.
 
 == Description ==
 
-This plugin provides an easy, lightweight way to let your users sign up for your Mailigen list.
-The Wordpress widget sign-up form is a double opt-in signup form, just like your other Mailigen forms. When a potential subscriber fills out the form, they will receive confirmation to their email address asking them to confirm their subscription.
+Mailigen Wordpress plugin provides an easy, lightweight way to let your visitors or clients to sign up for your Mailigen list. 
 
-The Mailigen Widget:
+With our Mailigen Wordpress Integration you can:
 
-*	is easy to use
-*	is easy to configure
-*	is AJAX-based
-*	displays the collection of only information that you actually need (i.e., an email address and a name) to ask from your mailers
+*	Add a sign-up form to your page
+*	Display the collection of only information that you actually need to ask from your mailers
+*	Customize texts of your sign-up form
+*	Collect checkbox, dropdown, and radio fields (user must eplicate values on the plugin settings separated by a comma)
+*	Set a widget description text
+*	Set a custom Success Message
+*	Ability to set an optional Redirect URL after submission
+*	Turn off double opt-in
+*	Turn off update existing user
+*	Turn off send welcome email
+*	Hide field labels (adds labels inside text fields)
+*	Add a waiting indicator when user needs to wait for a response from server after pressing subscribe button
+*	Multiple subscribe form widgets allowed on one page
 
 > __This plugin requires a <a href="http://www.mailigen.com" title="Sign up for a free Mailigen trial" rel="nofollow">Mailigen account</a>.__ <br />*Don't have an account?* Mailigen offers a <a href="http://www.mailigen.com/sign-up" rel="nofollow">free 30 day trial</a>, so sign up and give this plugin a try!
 
