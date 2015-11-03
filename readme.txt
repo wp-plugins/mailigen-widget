@@ -2,14 +2,14 @@
 Contributors: krisjanis@imedia.lv
 Tags: email marketing, mailigen, mailing list, newsletter, signup form, widget
 Requires at least: 3.0.1
-Tested up to: 4.1
+Tested up to: 4.3
 Stable tag: trunk
 
 Add beautiful sign-up forms with ease to your site. Create a custom design and place it on your site.
 
 == Description ==
 
-Mailigen Wordpress plugin provides an easy, lightweight way to let your visitors or clients to sign up for your Mailigen list. 
+Mailigen Wordpress plugin provides an easy, lightweight way to let your visitors or clients to sign up for your Mailigen list.
 
 With our Mailigen Wordpress Integration you can:
 
@@ -60,6 +60,15 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 == Changelog ==
 
+= 1.2.4 =
+* Fixed bug when plugin slowed down administration page if connection to Mailigen API could not be established.
+
+= 1.2.3 =
+* Added `Reset Settings` button in widget settings screen to allow connection with different Mailigen user account.
+
+= 1.2.2 =
+* Fixed bug `PHP Warning: Invalid argument supplied for foreach() in /public_html/wp-content/plugins/mailigen-widget/mailigen-widget.php on line 704`
+
 = 1.2.1 =
 * Added new features (Thanks to Ted Barnett):
  * multiple subscribe form widgets allowed on one page
@@ -88,6 +97,15 @@ In the WordPress administration, navigate to Settings > Mailigen Widget in the W
 
 
 == Upgrade Notice ==
+
+= 1.2.4 =
+* Fixed bug when plugin slowed down administration page if connection to Mailigen API could not be established.
+
+= 1.2.3 =
+* Added `Reset Settings` button in widget settings screen to allow connection with different Mailigen user account.
+
+= 1.2.2 =
+* Fixed bug `PHP Warning: Invalid argument supplied for foreach() in /public_html/wp-content/plugins/mailigen-widget/mailigen-widget.php on line 704`
 
 = 1.2.1 =
 * Added new features (Thanks to Ted Barnett):

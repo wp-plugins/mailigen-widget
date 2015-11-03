@@ -4,7 +4,7 @@
   Plugin Name: Mailigen Widget
   Plugin URI: http://www.mailigen.com/assets/files/resources/plugins/wordpress/mailigen-widget.zip
   Description: Adds Mailigen signup form to your sidebar.
-  Version: 1.2.1
+  Version: 1.2.4
   Author: Mailigen
   Author URI: http://www.mailigen.com
 
@@ -97,18 +97,18 @@ class Mailigen_Widget extends WP_Widget {
                     $fields[$key] = esc_attr($value);
                 }
             }
-            
+
             $widget_number = $this->getWidgetNumberFromPostData($fields);
-            
+
             $apiKey = $this->getOption('mg_apikey');
             $listId = $this->getOption('mg_fields_list');
             $errors = $this->validate($fields);
             $current_widget_options = get_option($this->option_name);
-            
+
             if($widget_number < 0 || !isset($current_widget_options[$widget_number])){
                 $widget_number = $this->number;
             }
-            
+
             $email_type = 'html';
             $double_optin = $current_widget_options[$widget_number]['double_optin'];
             $update_existing = $current_widget_options[$widget_number]['update_existing'];
@@ -318,7 +318,7 @@ class Mailigen_Widget extends WP_Widget {
             // text, email
             case 'text':
             case 'email':
-                if(!$hide_labels){ 
+                if(!$hide_labels){
                 echo "<dt><label for='{$name}' class='{$class}'>{$title}{$req}</label></dt>";
                 echo "<dd><input id='{$name}' type='text' name='{$name}' maxlength='100' class='{$class}' /></dd>";
                 } else {
@@ -399,12 +399,12 @@ class Mailigen_Widget extends WP_Widget {
         echo "</form>";
         echo $after_widget;
     }
-    
+
     /**
      *  Get widget number from post data
      */
     function getWidgetNumberFromPostData($fields = array()) {
-        
+
         if(isset($fields['mailigen_widget_form_number'])){
             return intval($fields['mailigen_widget_form_number']);
         }else{
@@ -507,6 +507,14 @@ class Mailigen_Options {
                 'desc' => __('Your Mailigen contacts list'),
                 'choices' => $this->getFieldsLists()
             ),
+            'mg_remove' => array(
+                'id' => 'mg-remove',
+                'section' => 'sect_mg_lists',
+                'type' => 'submit',
+                'title' => '&nbsp;',
+                'value' => __('Reset Settings'),
+                'onclick' => 'return confirm("All of the Mailigen settings will be removed!\nAre You sure?");',
+            ),
             // list fields
             'mg_fields' => array(
                 'id' => 'mg-fields',
@@ -566,12 +574,7 @@ class Mailigen_Options {
                     $section, $title, array(&$this, 'showSection'), $section
             );
         }
-        // Add fields to sections
-        foreach ($this->fieldsConfig() as $id => $field) {
-            $field['id'] = $field['id'] ? $field['id'] : $id;
-            $field['name'] = $field['name'] ? $field['name'] : $id;
-            $this->createField($field);
-        }
+
         // Switch post actions
         if ('POST' == $_SERVER['REQUEST_METHOD']) {
             if (isset($_POST['mg_login']))
@@ -580,6 +583,19 @@ class Mailigen_Options {
                 $this->update();
             if (isset($_POST['mg_remove']))
                 $this->remove();
+        }
+    }
+
+    /**
+     * Add dynamic fields to the sections.
+     * Fields are read from Mailigen using API
+     */
+    function addFieldsToSections() {
+        // Add fields to sections
+        foreach ($this->fieldsConfig() as $id => $field) {
+            $field['id'] = $field['id'] ? $field['id'] : $id;
+            $field['name'] = $field['name'] ? $field['name'] : $id;
+            $this->createField($field);
         }
     }
 
@@ -678,6 +694,7 @@ class Mailigen_Options {
             unset($this->options['mg_fields']);
             $this->options['mg_fields_list'] = $mg_list;
             update_option('mailigen_options', $this->options);
+            $this->addFieldsToSections();
             do_settings_sections('sect_mg_fields');
         }
         die();
@@ -762,7 +779,7 @@ class Mailigen_Options {
             'value' => '',
             'readonly' => '',
             'choices' => array(),
-            'callback' => array(&$this, 'showField')
+            'callback' => array(&$this, 'showField'),
         );
         extract(wp_parse_args($args, $defaults));
 
@@ -774,8 +791,11 @@ class Mailigen_Options {
             'class' => $class,
             'value' => $value,
             'readonly' => $readonly,
-            'choices' => $choices
+            'choices' => $choices,
         );
+        if (isset($onclick)) {
+            $fieldArgs['onclick'] = $onclick;
+        }
 
         add_settings_field(
 //                $id, $title, array(&$this, 'showField'), $section, $section, $fieldArgs
@@ -813,7 +833,8 @@ class Mailigen_Options {
             // submit button
             case 'submit':
                 echo "<p class='submit'>";
-                echo "<input class='button{$class}' type='{$type}' name='{$name}' value='{$value}' />";
+                $onclick = ( isset($onclick) && $onclick != '' ) ? " {$onclick}" : null;
+                echo "<input class='button{$class}' type='{$type}' name='{$name}' value='{$value}' onclick='{$onclick}' />";
                 echo "</p>";
                 break;
             // button list
@@ -889,6 +910,8 @@ class Mailigen_Options {
 
         settings_fields('mailigen_options');
 
+        $this->addFieldsToSections();
+
         // wrapper
         echo "<div class='wrap'>";
 
@@ -935,7 +958,7 @@ class Mailigen_Options {
         );
         wp_redirect($goback);
     }
-    
+
 }
 
 if (is_admin())
